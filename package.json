@@ -16,10 +16,20 @@
   "activationEvents": [],
   "main": "./dist/extension.js",
   "contributes": {
+    "views": {
+      "explorer": [
+        {
+          "type": "webview",
+          "id": "otterDr.otterView",
+          "name": "OtterDr",
+          "icon": ".assets/webview.png"
+        }
+      ]
+    },
     "commands": [
       {
-        "command": "vscode-react-webview-starter.openWebview",
-        "title": "React Webview: Open webview"
+        "command":  "otterDr.openWebview",
+        "title": "Explorer: open OtterDr view"
       }
     ]
   },
