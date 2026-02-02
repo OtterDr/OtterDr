@@ -6,6 +6,7 @@ import { ExtensionContext, ExtensionMode, Uri, Webview } from "vscode";
 import { MessageHandlerData } from "@estruyf/vscode";
 import { readFileSync } from "fs";
 
+
 export function activate(context: vscode.ExtensionContext) {
   const provider = new OtterViewProvider(context.extensionUri); // this is supposed to create a new Instance of the otterview? the class is created later
 
@@ -139,7 +140,7 @@ const getWebviewContent = (context: ExtensionContext, webview: Webview) => {
         scriptUrl.push(
           webview
             .asWebviewUri(
-              Uri.file(join(context.extensionPath, "dist", "webview", value))
+              // Uri.file(join(context.extensionPath, "dist", "webview", value))
             )
             .toString()
         );
