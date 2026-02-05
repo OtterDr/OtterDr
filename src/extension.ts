@@ -10,7 +10,6 @@ import { errorListener } from './errorListening';
 * package.json, updated activationEvents to include "onStartupFinished" which makes the extension activate after VS Code has finished its main startup process -> then calls the activate function. best practice over * wildcard because it doesn't impact overall startup
 
 */
-
 export function activate(context: vscode.ExtensionContext) {
   console.log('🔴 OtterDr ACTIVATING!');
   const provider = new OtterViewProvider(context.extensionUri); // this is supposed to create a new Instance of the otterview? the class is created later
@@ -99,9 +98,9 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
     const image = webview.asWebviewUri(
       vscode.Uri.joinPath(
         this._extensionUri,
-        'assets',
-        'juhele_caution-otters_crossing.svg',
-      ),
+        "assets",
+        "Default Image.png"
+      )
     );
 
     return `<!DOCTYPE html>
@@ -112,7 +111,6 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
      </head>
      <body>
        <div id="root"></div>
-       <p> Hello </p>
        <img src ="${image}" alt= "Otter image">
      </body>
      </html>`;
