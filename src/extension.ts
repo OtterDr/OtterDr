@@ -24,11 +24,12 @@ export function activate(context: vscode.ExtensionContext) {
   );
 
   // For adding Code Action to the lightbulb -- WIP (Look at Emojizer in https://github.com/microsoft/vscode-extension-samples/blob/main/code-actions-sample/src/extension.ts + later on, Emojinfo)
-  context.subscriptions.push(
-    vscode.languages.registerCodeActionsProvider('markdown', new OtterDrCodeActionProvider(), {
-      providedCodeActionKinds: OtterDrCodeActionProvider.providedCodeActionKinds
-    })
-  );
+  // context.subscriptions.push(
+  //   vscode.languages.registerCodeActionsProvider('markdown', new OtterDrCodeActionProvider(), {
+  //     providedCodeActionKinds: OtterDrCodeActionProvider.providedCodeActionKinds
+  //   })
+  // );
+
   let disposable = errorListener();
 
   // export function activate(context: vscode.ExtensionContext) {
@@ -69,8 +70,8 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 // createDiagnosticCollection = Creates a managed colelction of code diagnostics ('errors, warnings, hints etc) which are then displayed in the editor as red squigglies and the Problems panel ==> IN SHORT, THIS ARTIFICIALLY CREATES ERROR DIAGNOSTICS!
-const emojiDiagnostics = vscode.languages.createDiagnosticCollection("emoji"); // For this particular example, they are making every single instance of the string "emoji" pop up as squigglies in the given repo!
-context.subscriptions.push(emojiDiagnostics);
+// const emojiDiagnostics = vscode.languages.createDiagnosticCollection("emoji"); // For this particular example, they are making every single instance of the string "emoji" pop up as squigglies in the given repo!
+// context.subscriptions.push(emojiDiagnostics);
 
 
 //Creating OtterViewProvider -- Completed! 
@@ -119,69 +120,58 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
 }
 
 //Creating Code Action -- WIP
-class OtterDrCodeActionProvider implements vscode.CodeActionProvider {
-  static providedCodeActionKinds: readonly CodeActionKind[] | undefined;}
+// class OtterDrCodeActionProvider implements vscode.CodeActionProvider {
+//   static providedCodeActionKinds: readonly CodeActionKind[] | undefined;}
 
 
 
 
 // this method is called when your extension is deactivated
-export function deactivate() {}
+// export function deactivate() {}
 
-const getWebviewContent = (context: ExtensionContext, webview: Webview) => {
-  const jsFile = 'main.bundle.js';
-  const localServerUrl = 'http://localhost:9000';
+// const getWebviewContent = (context: ExtensionContext, webview: Webview) => {
+//   const jsFile = 'main.bundle.js';
+//   const localServerUrl = 'http://localhost:9000';
 
-  let scriptUrl = [];
-  let cssUrl = null;
+//   let scriptUrl = [];
+//   let cssUrl = null;
 
-  const isProduction = context.extensionMode === ExtensionMode.Production;
-  if (isProduction) {
-    // Get the manifest file from the dist folder
-    const manifest = readFileSync(
-      join(context.extensionPath, 'dist', 'webview', 'manifest.json'),
-      'utf-8',
-    );
-    const manifestJson = JSON.parse(manifest);
-    for (const [key, value] of Object.entries<string>(manifestJson)) {
-      if (key.endsWith('.js')) {
-        scriptUrl.push(
-          webview
-            .asWebviewUri(
-              Uri.file(join(context.extensionPath, 'dist', 'webview', value)),
-            )
-            .toString(),
-        );
-      }
-    }
-  } else {
-    scriptUrl.push(`${localServerUrl}/${jsFile}`);
-  }
+//   const isProduction = context.extensionMode === ExtensionMode.Production;
+//   if (isProduction) {
+//     // Get the manifest file from the dist folder
+//     const manifest = readFileSync(
+//       join(context.extensionPath, 'dist', 'webview', 'manifest.json'),
+//       'utf-8',
+//     );
+//     const manifestJson = JSON.parse(manifest);
+//     for (const [key, value] of Object.entries<string>(manifestJson)) {
+//       if (key.endsWith('.js')) {
+//         scriptUrl.push(
+//           webview
+//             .asWebviewUri(
+//               Uri.file(join(context.extensionPath, 'dist', 'webview', value)),
+//             )
+//             .toString(),
+//         );
+//       }
+//     }
+//   } else {
+//     scriptUrl.push(`${localServerUrl}/${jsFile}`);
+//   }
 
-  return `<!DOCTYPE html>
-	<html lang="en">
-	<head>
-		<meta charset="UTF-8">
-		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	</head>
-	<body>
-		<div id="root"></div>
-    <p> Hello </p>
-    <img src="/assets/juhele_caution-otters_crossing.svg" alt="Test image">
-	</body>
-	</html>`;
- <html lang="en">
- <head>
-   <meta charset="UTF-8">
-   <meta name="viewport" content="width=device-width, initial-scale=1.0">
- </head>
- <body>
-   <div id="root"></div>
-   <p> Hello </p>
-   <img src="/assets/juhele_caution-otters_crossing.svg" alt="Test image">
- </body>
- </html>`;
-};
+//   return `<!DOCTYPE html>
+// 	<html lang="en">
+// 	<head>
+// 		<meta charset="UTF-8">
+// 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+// 	</head>
+// 	<body>
+// 		<div id="root"></div>
+//     <p> Hello </p>
+//     <img src="/assets/juhele_caution-otters_crossing.svg" alt="Test image">
+// 	</body>
+// 	</html>`;
+// };
 
 //  =============== Some Notes =================
 //  webviewView = instance of vscode.WebviewView; represents a custom view you registered
