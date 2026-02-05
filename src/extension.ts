@@ -9,27 +9,28 @@ import { readFileSync } from "fs";
 export function activate(context: vscode.ExtensionContext) {
   const provider = new OtterViewProvider(context.extensionUri); // this is supposed to create a new Instance of the otterview? the class is created later
 
+  // For displaying the otter on explorer -- Completed!
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider(
       OtterViewProvider.viewType,
       provider
     )
   );
-}
-// activates this function when vscode is loaded
-// let disposable = vscode.commands.registerCommand(
-//   "otterDr.openWebview",
-//   () => {
-// const panel =  vscode.window.registerWebviewViewProvider( // this is supposed to create a new Instance of  the otterview?
-//   "otterDr.otterView",
-//   "Explorer: open OtterDr view",
-//   vscode.ViewColumn.One,
-//   {
-//     enableScripts: true,
-//     retainContextWhenHidden: true,
-//   }
-// );
 
+  // For adding Code Action to the lightbulb -- WIP (Look at Emojizer in https://github.com/microsoft/vscode-extension-samples/blob/main/code-actions-sample/src/extension.ts + later on, Emojinfo)
+  context.subscriptions.push(
+    vscode.languages.registerCodeActionsProvider('markdown', new OtterDrCodeActionProvider(), {
+      providedCodeActionKinds: OtterDrCodeActionProvider.providedCodeActionKinds
+    })
+  );
+}
+
+// createDiagnosticCollection = Creates a managed colelction of code diagnostics ('errors, warnings, hints etc) which are then displayed in the editor as red squigglies and the Problems panel ==> IN SHORT, THIS ARTIFICIALLY CREATES ERROR DIAGNOSTICS!
+const emojiDiagnostics = vscode.languages.createDiagnosticCollection("emoji"); // For this particular example, they are making every single instance of the string "emoji" pop up as squigglies in the given repo!
+context.subscriptions.push(emojiDiagnostics);
+
+
+//Creating OtterViewProvider -- Completed! 
 class OtterViewProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = "otterDr.otterView";
   private _view?: vscode.WebviewView;
@@ -79,42 +80,12 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
   }
 }
 
-// <img src="/assets/juhele_caution-otters_crossing.svg" alt="Test image">
+//Creating Code Action -- WIP
+class OtterDrCodeActionProvider implements vscode.CodeActionProvider {
+  static providedCodeActionKinds: readonly CodeActionKind[] | undefined;}
 
-//       panel.webview.onDidReceiveMessage(
-//         (message) => {
-//           const { command, requestId, payload } = message;
 
-//           if (command === "GET_DATA") {
-//             // Do something with the payload
 
-//             // Send a response back to the webview
-//             panel.webview.postMessage({
-//               command,
-//               requestId, // The requestId is used to identify the response
-//               payload: `Hello from the extension!`,
-//             } as MessageHandlerData<string>);
-//           } else if (command === "GET_DATA_ERROR") {
-//             panel.webview.postMessage({
-//               command,
-//               requestId, // The requestId is used to identify the response
-//               error: `Oops, something went wrong!`,
-//             } as MessageHandlerData<string>);
-//           } else if (command === "POST_DATA") {
-//             vscode.window.showInformationMessage(
-//               `Received data from the webview: ${payload.msg}`
-//             );
-//           }
-//         },
-//         undefined,
-//         context.subscriptions
-//       );
-
-//       panel.webview.html = getWebviewContent(context, panel.webview);
-//     }
-//   );
-
-//   context.subscriptions.push(disposable);
 
 // this method is called when your extension is deactivated
 export function deactivate() {}
@@ -161,19 +132,4 @@ const getWebviewContent = (context: ExtensionContext, webview: Webview) => {
     <img src="/assets/juhele_caution-otters_crossing.svg" alt="Test image">
 	</body>
 	</html>`;
-
-  // //Below is text included in original repo
-  // return `<!DOCTYPE html>
-  // <html lang="en">
-  // <head>
-  // 	<meta charset="UTF-8">
-  // 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-  // 	${isProduction ? `<link href="${cssUrl}" rel="stylesheet">` : ""}
-  // </head>
-  // <body>
-  // 	<div id="root"></div>
-
-  // 	${scriptUrl.map((url) => `<script src="${url}"></script>`).join("\n")}
-  // </body>
-  // </html>`;
 };
