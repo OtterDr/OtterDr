@@ -69,6 +69,6 @@ export async function otterTranslation(error: string, apiKey: string): Promise<s
 }catch(err){
     console.error("Error Occured with Translation:", err);
     
-    return `Otter try again, that error was unresolved: ${err}`;
+    return `🦦 Otter can't sea a translation to that error. Please check your API key or network connection and try again.`;
 }   
 }
