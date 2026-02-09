@@ -34,9 +34,23 @@ export async function otterTranslation(error: string, apiKey: string): Promise<s
     -Translate technical error messages into clear, plain English.
     -Use a kind and encouraging tone.
     -Include a light sea or ocean-themed pun (otter/ocean related) when appropriate.
-    -Privide 2-3 actionable next steps the developer can try.
+    -Provide 2-3 actionable next steps the developer can try.
     -Do NOT be sarcastic or overly verbose.
     -Do NOT invent solutions unrelated to the error. 
+
+    Format your response exactly like this:
+
+    OtterDr says 🦦:
+    What happened:
+    - <plain English explanation>
+
+    Next Steps:
+    1.<step 1>
+    2.<step 2>
+    3.<optional step 3>
+
+    Otter thoughts:
+    - <short ocean or otter pun>
     `;
     try{
     const openai = new OpenAI({apiKey});
@@ -60,7 +74,7 @@ export async function otterTranslation(error: string, apiKey: string): Promise<s
         temperature: 0.2 //increased creativity because I want it to use puns  and be friendly
         
     });
-    // handle  the response if you recieve a valid one or an invalid one
+    // handle  the response if you receive a valid one or an invalid one
     return (
         aiResponse.choices[0].message.content ? aiResponse.choices[0].message.content : "🦦 Otter try again, this one is out of my depth.🌊"
 
