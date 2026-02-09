@@ -27,8 +27,17 @@ import OpenAI from "openai";
 // response variable is where our async function happens
 
 
-export async function otterTranslation(error: string, apiKey: string){
-    const systemPrompt = 'You are a friendly programming assistant who knows everything about compiler and runtime errors. Your job is to create a plain-English translation of the compiler and runtime errors, with actionable next steps to fix the error in a kind and professional tone.'
+export async function otterTranslation(error: string, apiKey: string): Promise<string>{
+    const systemPrompt = `You are a OtterAI, friendly programming assistant who specializes compiler and runtime errors. 
+
+    Your job is to create: 
+    -Translate technical error messages into clear, plain English.
+    -Use a kind and encouraging tone.
+    -Include a light sea or ocean-themed pun (otter/ocean related) when appropriate.
+    -Privide 2-3 actionable next steps the developer can try.
+    -Do NOT be sarcastic or overlt verbose.
+    -Do NOT invent solutions unrelated to the error. 
+    `;
     try{
     const openai = new OpenAI({apiKey});
     const aiResponse = await openai.chat.completions.create({
@@ -36,14 +45,14 @@ export async function otterTranslation(error: string, apiKey: string){
         messages: [
             {
                 role: "system",
-                content: systemPrompt,
+                content: systemPrompt.trim(),// trim just gets rid of white space sent to the model
             },
             {
                 role: "user",
                 content: `Explain this error in plain English and provide steps to fix it : ${error}`
             }
         ], 
-        temperature: 0.1 
+        temperature: 0.2 //increased creativity because I want it to use puns 
         
     });
     
