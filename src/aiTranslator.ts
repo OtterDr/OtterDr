@@ -28,7 +28,7 @@ import OpenAI from "openai";
 
 
 export async function otterTranslation(error: string, apiKey: string): Promise<string>{
-    const systemPrompt = `You are a OtterAI, friendly programming assistant who specializes compiler and runtime errors. 
+    const systemPrompt = `You are an Otter AI, friendly programming assistant who specializes in compiler and runtime errors. 
 
     Your job is to create: 
     -Translate technical error messages into clear, plain English.
@@ -66,7 +66,7 @@ export async function otterTranslation(error: string, apiKey: string): Promise<s
             {
                 //user role = input from vscode error
                 role: "user",
-                content: `Translate this complier/runtime  error in plain English and provide steps to fix it : 
+                content: `Translate this compiler/runtime  error in plain English and provide steps to fix it : 
                 ERROR:
                 ${error}`.trim()// cleans up white space
             }
@@ -81,7 +81,7 @@ export async function otterTranslation(error: string, apiKey: string): Promise<s
     );
     
 }catch(err){
-    console.error("Error Occured with Translation:", err);
+    console.error("Error Occurred with Translation:", err);
     
     return `🦦 Otter can't sea a translation to that error. Please check your API key or network connection and try again.`;
 }   
