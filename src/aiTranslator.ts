@@ -35,26 +35,36 @@ export async function otterTranslation(error: string, apiKey: string): Promise<s
     -Use a kind and encouraging tone.
     -Include a light sea or ocean-themed pun (otter/ocean related) when appropriate.
     -Privide 2-3 actionable next steps the developer can try.
-    -Do NOT be sarcastic or overlt verbose.
+    -Do NOT be sarcastic or overly verbose.
     -Do NOT invent solutions unrelated to the error. 
     `;
     try{
     const openai = new OpenAI({apiKey});
     const aiResponse = await openai.chat.completions.create({
         model: "gpt-5-nano",
+        //using messages tells the model how to behave and what to respond to
         messages: [
             {
+                //system role = model's rules and personality
                 role: "system",
                 content: systemPrompt.trim(),// trim just gets rid of white space sent to the model
             },
             {
+                //user role = input from vscode error
                 role: "user",
-                content: `Explain this error in plain English and provide steps to fix it : ${error}`
+                content: `Translate this complier/runtime  error in plain English and provide steps to fix it : 
+                ERROR:
+                ${error}`.trim()// cleans up white space
             }
         ], 
-        temperature: 0.2 //increased creativity because I want it to use puns 
+        temperature: 0.2 //increased creativity because I want it to use puns  and be friendly
         
     });
+    // handle  the response if you recieve a valid one or an invalid one
+    return (
+        aiResponse.choices[0].message.content ? aiResponse.choices[0].message.content : "🦦 Otter try again, this one is out of my depth.🌊"
+
+    );
     
 }catch(err){
     console.error("Error Occured with Translation:", err);
