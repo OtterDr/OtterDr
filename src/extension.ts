@@ -22,6 +22,38 @@ export function activate(context: vscode.ExtensionContext) {
     ),
   );
 
+  //Registering AskOtterDr
+  const askOtter = vscode.commands.registerCommand('otterDr.ask', async (args) => {
+  //initial Otter view (before question)
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+      vscode.window.showInformationMessage('Open a file to ask OtterDr about its problems.');
+      return;
+    }
+//calls for the selected error --otherwise checks the whole repo  
+    const selectionText = editor.document.getText(editor.selection).trim();
+    const docDiagnostics = vscode.languages.getDiagnostics(editor.document.uri);
+    //functionality to find error based on text or based on problems panel
+    let contextText = '';
+    if (selectionText) {
+      contextText = selectionText;
+    } else if (docDiagnostics.length > 0) {
+      contextText = docDiagnostics
+      .map(d => `${vscode.DiagnosticSeverity[d.severity]}: ${d.message} (line ${d.range.start.line + 1})`)
+      .join('\n\n');
+    } else {
+      contextText = 'No diagnostics found in this file.';
+    }
+    //Boiler AI call 
+    const aiAnswer = await vscode.window.withProgress(
+          { location: vscode.ProgressLocation.Notification, title: 'Asking OtterDr...', cancellable: false },
+          async () => {
+            return await runAiQuery(contextText);
+          },
+        );
+  })
+
+
   // For adding Code Action to the lightbulb -- WIP (Look at Emojizer in https://github.com/microsoft/vscode-extension-samples/blob/main/code-actions-sample/src/extension.ts + later on, Emojinfo)
   // context.subscriptions.push(
   //   vscode.languages.registerCodeActionsProvider('markdown', new OtterDrCodeActionProvider(), {
@@ -122,6 +154,7 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
 //   static providedCodeActionKinds: readonly CodeActionKind[] | undefined;}
 
 
+//Creating AskOtterDr button - WIP
 
 
 // this method is called when your extension is deactivated
@@ -170,6 +203,8 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
 // 	</body>
 // 	</html>`;
 // };
+
+
 
 //  =============== Some Notes =================
 //  webviewView = instance of vscode.WebviewView; represents a custom view you registered
