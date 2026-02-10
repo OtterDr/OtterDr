@@ -90,6 +90,6 @@ export async function otterTranslation(error: string, apiKey: string): Promise<s
 }catch(err){
     console.error("Error Occurred with Translation:", err);
     
-    return `🦦 Otter can't sea a translation to that error. Please check your API key or network connection and try again.`;
+    return `🦦 Otter can't sea a translation to that error. Please check your API key or network connection and dive back in.`;
 }   
 }
