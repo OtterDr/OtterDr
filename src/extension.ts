@@ -1,9 +1,9 @@
-import { join } from 'path';
-import * as vscode from 'vscode';
-import { ExtensionContext, ExtensionMode, Uri, Webview } from 'vscode';
-import { MessageHandlerData } from '@estruyf/vscode';
-import { readFileSync } from 'fs';
-import { errorListener } from './errorListening';
+import { join } from "path";
+import * as vscode from "vscode";
+import { ExtensionContext, ExtensionMode, Uri, Webview } from "vscode";
+import { MessageHandlerData } from "@estruyf/vscode";
+import { readFileSync } from "fs";
+import { errorListener } from "./errorListening";
 
 /* CHANGES KATY MADE: 
 * errorListener function defined in errorListening.ts, imported here and invoked with disposable
@@ -11,16 +11,37 @@ import { errorListener } from './errorListening';
 
 */
 export function activate(context: vscode.ExtensionContext) {
-  console.log('🔴 OtterDr ACTIVATING!');
+  console.log("🔴 OtterDr ACTIVATING!");
   const provider = new OtterViewProvider(context.extensionUri); // this is supposed to create a new Instance of the otterview? the class is created later
 
   // For displaying the otter on explorer -- Completed!
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider(
       OtterViewProvider.viewType,
-      provider,
-    ),
+      provider
+    )
   );
+
+  // register a command that is invoked when the status bar
+  // item is selected
+  const myCommandId = "sample.showSelectionCount";
+  context.subscriptions.push(
+    vscode.commands.registerCommand(myCommandId, () => {
+      vscode.window.showInformationMessage(`Hello, is this working`);
+    })
+  );
+
+  // create a new status bar item that we can now manage
+  const myStatusBarItem = vscode.window.createStatusBarItem(
+    vscode.StatusBarAlignment.Right,
+    100
+  );
+  myStatusBarItem.command = myCommandId;
+  context.subscriptions.push(myStatusBarItem);
+  myStatusBarItem.text = "🦦 OtterDr";
+  myStatusBarItem.show();
+  
+
 
   // For adding Code Action to the lightbulb -- WIP (Look at Emojizer in https://github.com/microsoft/vscode-extension-samples/blob/main/code-actions-sample/src/extension.ts + later on, Emojinfo)
   // context.subscriptions.push(
@@ -72,17 +93,16 @@ export function activate(context: vscode.ExtensionContext) {
 // const emojiDiagnostics = vscode.languages.createDiagnosticCollection("emoji"); // For this particular example, they are making every single instance of the string "emoji" pop up as squigglies in the given repo!
 // context.subscriptions.push(emojiDiagnostics);
 
-
-//Creating OtterViewProvider -- Completed! 
+//Creating OtterViewProvider -- Completed!
 class OtterViewProvider implements vscode.WebviewViewProvider {
-  public static readonly viewType = 'otterDr.otterView';
+  public static readonly viewType = "otterDr.otterView";
   private _view?: vscode.WebviewView;
 
   constructor(private readonly _extensionUri: vscode.Uri) {}
 
   public resolveWebviewView(
     webviewView: vscode.WebviewView,
-    _context: vscode.WebviewViewResolveContext,
+    _context: vscode.WebviewViewResolveContext
   ) {
     this._view = webviewView;
 
@@ -96,11 +116,7 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
   }
   private _getHtmlForWebview(webview: vscode.Webview) {
     const image = webview.asWebviewUri(
-      vscode.Uri.joinPath(
-        this._extensionUri,
-        "assets",
-        "Default Image.png"
-      )
+      vscode.Uri.joinPath(this._extensionUri, "assets", "Default Image.png")
     );
 
     return `<!DOCTYPE html>
@@ -120,9 +136,6 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
 //Creating Code Action -- WIP
 // class OtterDrCodeActionProvider implements vscode.CodeActionProvider {
 //   static providedCodeActionKinds: readonly CodeActionKind[] | undefined;}
-
-
-
 
 // this method is called when your extension is deactivated
 // export function deactivate() {}
