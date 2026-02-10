@@ -4,7 +4,7 @@ import { ExtensionContext, ExtensionMode, Uri, Webview } from 'vscode';
 import { MessageHandlerData } from '@estruyf/vscode';
 import { readFileSync } from 'fs';
 import { errorListener } from './errorListening';
-import { messageHandler } from '@estruyf/vscode/dist/client';
+
 
 export function activate(context: vscode.ExtensionContext) {
   console.log('🔴 OtterDr ACTIVATING!');
@@ -18,20 +18,7 @@ export function activate(context: vscode.ExtensionContext) {
     ),
   );
 
-  // have webview send a message to backend
-  //POST_DATA is the id attached to the message
-  const sendMessage = () => {
-    messageHandler.send('POST_DATA', { msg: 'Hello from the webview' });
-  };
-
-  // get data from the backend with the 'GET_DATA' id
-  const requestData = () => {
-    messageHandler.request<string>('GET_DATA').then((msg) => {
-      console.log(`Message received: ${msg}`);
-    });
-  };
-
-  let disposable = errorListener();
+  let disposable = errorListener(provider);
 
   context.subscriptions.push(disposable);
 }
@@ -43,6 +30,15 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
 
   constructor(private readonly _extensionUri: vscode.Uri) {}
 
+  // method to push error data to the webview
+  public sendErrorsToWebview(errors: vscode.Diagnostic[]) {
+    if (this._view) {
+      this._view.webview.postMessage({
+        type: 'SET_ERRORS',
+        errors: errors, // array of error objects
+      });
+    }
+  }
   public resolveWebviewView(
     webviewView: vscode.WebviewView,
     _context: vscode.WebviewViewResolveContext,
@@ -62,6 +58,8 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
       vscode.Uri.joinPath(this._extensionUri, 'assets', 'Default Image.png'),
     );
 
+    // add <script> tag inside HTML string to listen for messages
+    // LATER add logic if message.count > 0, otter emote changes
     return `<!DOCTYPE html>
     <html lang="en">
       <head>
@@ -71,6 +69,16 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
       <body>
         <div id="root"></div>
         <img src ="${image}" alt= "Otter image">
+        <script>
+        const vscode = acquireVsCodeApi();
+        window.addEventListener('message', event => {
+        const message = event.data;
+        if (message.type === 'SET_ERRORS') {
+        console.log("Errors received in webview:", message.errors.length);
+        console.log("Full error data:", message.errors);
+          }
+        });
+        </script>
       </body>
     </html>`;
   }

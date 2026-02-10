@@ -1,32 +1,40 @@
 import * as vscode from 'vscode';
 
-
-
-export function errorListener() {
-  // to get diagnostics for ALL files
-  // return the "subscription" so it can be managed
-   return vscode.languages.onDidChangeDiagnostics(event => {
+// pass provider in so function knows where to send the data
+export function errorListener(provider: any) {
+  // make async in order to access code snippet
+  return vscode.languages.onDidChangeDiagnostics(async (event) => {
     // 'event' contains the Uris of the files with changed diagnostics
     for (const uri of event.uris) {
       // get diagnostics for this file
       const diagnostics = vscode.languages.getDiagnostics(uri);
-      if (diagnostics.length > 0) {
-        // filter for errors -> in diagnostics, severity 0 = error, severity 1 = warning, severity 2 = info
-        const errors = diagnostics.filter(diagObj => diagObj.severity === vscode.DiagnosticSeverity.Error);
-        console.log(`Found ${errors.length} errors in this file: ${uri.fsPath}`);
-        errors.forEach((error, idx) => {
-          console.log(` Error ${idx + 1}: ${error.message} (Line ${error.range.start.line + 1})`);
-        });
+      // filter for errors
+      const errors = diagnostics.filter(
+        (diagObj) => diagObj.severity === vscode.DiagnosticSeverity.Error,
+      );
+
+      if (errors.length > 0) {
+        // read the text where error occurred
+        const document = await vscode.workspace.openTextDocument(uri);
+
+        // LATER:send to ai the message and codeSnippet
+        const errorData = errors.map((err) => ({
+          message: err.message, //err message
+          line: err.range.start.line + 1, //line where err is
+          codeSnippet: document.lineAt(err.range.start.line).text.trim(), //specific line of broken code
+          source: uri.fsPath, // file where error is
+        }));
+        console.log('Error Data:', errorData);
+        // send the errors to the provider
+        provider.sendErrorsToWebview(errorData);
       }
     }
   });
 }
-  
+
 // on hover, get access to diagnostic error
 // THEN onclick,save the diagnostic error
 // package and send error to AI
-
-
 
 // declare variable to hold active text editor (vscode.window.activeTextEditor or something)
 
