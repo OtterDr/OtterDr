@@ -23,12 +23,37 @@ export function activate(context: vscode.ExtensionContext) {
     ),
   );
 
+
   // For adding Code Action to the lightbulb -- WIP (Look at Emojizer in https://github.com/microsoft/vscode-extension-samples/blob/main/code-actions-sample/src/extension.ts + later on, Emojinfo)
-  // context.subscriptions.push(
-  //   vscode.languages.registerCodeActionsProvider('markdown', new OtterDrCodeActionProvider(), {
-  //     providedCodeActionKinds: OtterDrCodeActionProvider.providedCodeActionKinds
-  //   })
-  // );
+
+  // ============= Notes
+  //  context.subscriptions.push --> Ensures VS Code cleans up when extension is deactivated
+  //  providedCodeActionKinds --> Tells VSCode that this provider only supplies Quick Fixes
+  context.subscriptions.push(
+    vscode.languages.registerCodeActionsProvider('typescript', new OtterDrCodeActionProvider(), { // You can change the type of coding language this will accept; if you want to add multiple you can make it into an array
+      providedCodeActionKinds: OtterDrCodeActionProvider.providedCodeActionKinds
+    })
+  );
+
+  
+// // ============== Notes (Honestly don't think we need the following, but adding for reference / studying ) for https://github.com/microsoft/vscode-extension-samples/blob/main/code-actions-sample/src/extension.ts
+// // createDiagnosticCollection = Creates a managed collection of code diagnostics ('errors, warnings, hints etc) which are then displayed in the editor as red squigglies and the Problems panel ==> IN SHORT, THIS ARTIFICIALLY CREATES ERROR DIAGNOSTICS!
+// // const emojiDiagnostics = vscode.languages.createDiagnosticCollection("emoji"); --> "emoji" is just the collection name
+// // context.subscriptions.push(emojiDiagnostics); --> For cleanup later
+// // subscribeToDocumentChanges(context, emojiDiagnostics); --> Hooks into file changes, diagnostics related to emojis are updated when doc changes! This creates diagnostics that Emojinfo later reacts to!
+
+// 	const emojiDiagnostics = vscode.languages.createDiagnosticCollection("emoji");
+// 	context.subscriptions.push(emojiDiagnostics);
+
+// 	subscribeToDocumentChanges(context, emojiDiagnostics);
+
+// 	context.subscriptions.push(
+// 		vscode.languages.registerCodeActionsProvider('markdown', new Emojinfo(), {
+// 			providedCodeActionKinds: Emojinfo.providedCodeActionKinds
+// 		})
+// 	);
+
+
 
   let disposable = errorListener();
 
@@ -67,11 +92,14 @@ export function activate(context: vscode.ExtensionContext) {
   // );
 
   context.subscriptions.push(disposable);
+
+  // // ======== Notes
+  // // This registers the command with ID "COMMAND" that is triggered by code actions later. It opens the unicode emoji website in browser
+	context.subscriptions.push(
+		vscode.commands.registerCommand(COMMAND, () => vscode.env.openExternal(vscode.Uri.parse('https://unicode.org/emoji/charts-12.0/full-emoji-list.html')))
+	);
 }
 
-// createDiagnosticCollection = Creates a managed colelction of code diagnostics ('errors, warnings, hints etc) which are then displayed in the editor as red squigglies and the Problems panel ==> IN SHORT, THIS ARTIFICIALLY CREATES ERROR DIAGNOSTICS!
-// const emojiDiagnostics = vscode.languages.createDiagnosticCollection("emoji"); // For this particular example, they are making every single instance of the string "emoji" pop up as squigglies in the given repo!
-// context.subscriptions.push(emojiDiagnostics);
 
 
 //Creating OtterViewProvider -- Completed! 
@@ -119,10 +147,69 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
   }
 }
 
+
+
 //Creating Code Action -- WIP
 // class OtterDrCodeActionProvider implements vscode.CodeActionProvider {
 //   static providedCodeActionKinds: readonly CodeActionKind[] | undefined;}
 
+export class OtterDrCodeActionProvider implements vscode.CodeActionProvider {
+
+	public static readonly providedCodeActionKinds = [
+		vscode.CodeActionKind.QuickFix
+	];
+  
+// Called by VS Code when the cursor moves / text changes ===> WIP, MIGHT REQUIRE EDITS
+//  - document: the file
+//  - range: where the cursor or selection is
+	public provideCodeActions(document: vscode.TextDocument, range: vscode.Range): vscode.CodeAction[] | undefined {
+    //  No action unless cursor isAtStartOfSmiley
+		if (!this.isAtStartOfSmiley(document, range)) {
+			return;
+		}
+
+		const replaceWithSmileyCatFix = this.createFix(document, range, '😺');
+
+		const replaceWithSmileyFix = this.createFix(document, range, '😀');
+		// Marking a single fix as `preferred` means that users can apply it with a
+		// single keyboard shortcut using the `Auto Fix` command.
+		replaceWithSmileyFix.isPreferred = true;
+
+    //  Creates code action that runs command (Doesn't edit text, opens website)
+		const commandAction = this.createCommand();
+
+    // Returns all available code actions for this location
+		return [
+			replaceWithSmileyCatFix,
+			replaceWithSmileyFix,
+			commandAction
+		];
+	}
+
+  // Helper to detect ':)'
+	private isAtStartOfSmiley(document: vscode.TextDocument, range: vscode.Range) {
+		const start = range.start;
+		const line = document.lineAt(start.line);
+		return line.text[start.character] === ':' && line.text[start.character + 1] === ')';
+	}
+
+  //  Helper to create text replacement fix
+	private createFix(document: vscode.TextDocument, range: vscode.Range, emoji: string): vscode.CodeAction {
+
+    //  **** IMPORTANT **** : Visible label in the UI ==> I think we might need to change vscode.CodeActionKind.QuickFix; instead of that we might need to find a way for this to grab the error text / highlighted text
+		const fix = new vscode.CodeAction(`Ask OtterDr? 🦦`, vscode.CodeActionKind.QuickFix);
+    // WorkspaceEdit ==> Describes text changes across files
+		fix.edit = new vscode.WorkspaceEdit();
+		fix.edit.replace(document.uri, new vscode.Range(range.start, range.start.translate(0, 2)), emoji);
+		return fix;
+	}
+
+	private createCommand(): vscode.CodeAction {
+		const action = new vscode.CodeAction('Learn more...', vscode.CodeActionKind.Empty);
+		action.command = { command: COMMAND, title: 'Learn more about emojis', tooltip: 'This will open the unicode emoji page.' };
+		return action;
+	}
+}
 
 
 
