@@ -44,12 +44,12 @@ export async function otterTranslation(error: string, apiKey: string): Promise<s
     What happened:
     - <plain English explanation>
 
-    Next Steps:
+    Next Steps 👣:
     1.<step 1>
     2.<step 2>
     3.<optional step 3>
 
-    Otter thoughts:
+    Otter thoughts 💭:
     - <short ocean or otter pun>
     `;
     try{
@@ -74,11 +74,18 @@ export async function otterTranslation(error: string, apiKey: string): Promise<s
         temperature: 0.2 //increased creativity because I want it to use puns  and be friendly
         
     });
+    //save the response in a variable
+    const aiMessage = aiResponse.choices[0].message.content ;
+    
     // handle  the response if you receive a valid one or an invalid one
-    return (
-        aiResponse.choices[0].message.content ? aiResponse.choices[0].message.content : "🦦 Otter try again, this one is out of my depth.🌊"
+    if(!aiMessage){// checks if the message is invalid
+      return "🦦 Otter try again, this one is out of my depth. 🌊";  //Throw message to show valid aiMessage wasn't recieved
+    }
+    return  aiMessage.trim();
 
-    );
+        // Original attempt with ternary:
+        // aiResponse.choices[0].message.content ? aiResponse.choices[0].message.content : "🦦 Otter try again, this one is out of my depth.🌊"
+       
     
 }catch(err){
     console.error("Error Occurred with Translation:", err);
