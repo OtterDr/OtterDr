@@ -26,9 +26,34 @@ import OpenAI from "openai";
 
 // response variable is where our async function happens
 
+/*
+TESTING:
+* MOCK: What we receive from webview:
+    * editor object props (language, range (s line, s char, end line, end char), text)
+* MOCK: Diagnostic array with errors that match mock object sent from webview
+* Function to match range in editor object to one of the objects in the diagnostics array
+* Create an "error" variable that includes editor object and matching diagnostic (nested object)
+    * this variable is passed in as the "error" argument in AI call
 
-export async function otterTranslation(error: string, apiKey: string): Promise<string>{
-    const systemPrompt = `You are an Otter AI, friendly programming assistant who specializes in compiler and runtime errors. 
+const error = {
+ editor: {
+ 
+ }, 
+ diagnostic: {
+ 
+ }
+}
+*/
+
+export async function otterTranslation(
+  error: object,
+  apiKey: string,
+): Promise<string> {
+  if (!apiKey) {
+    throw new Error("apiKey is required.");
+  }
+
+  const systemPrompt = `You are an Otter AI, friendly programming assistant who specializes in compiler and runtime errors. 
 
     Your job is to : 
     -Translate technical error messages into clear, plain English.
@@ -52,44 +77,43 @@ export async function otterTranslation(error: string, apiKey: string): Promise<s
     Otter thoughts 💭:
     - <short ocean or otter pun>
     `;
-    try{
-    const openai = new OpenAI({apiKey});
+  try {
+    const openai = new OpenAI({ apiKey });
     const aiResponse = await openai.chat.completions.create({
-        model: "gpt-5-nano",
-        //using messages tells the model how to behave and what to respond to
-        messages: [
-            {
-                //system role = model's rules and personality
-                role: "system",
-                content: systemPrompt.trim(),// trim just gets rid of white space sent to the model
-            },
-            {
-                //user role = input from vscode error
-                role: "user",
-                content: `Translate this compiler/runtime  error in plain English and provide steps to fix it : 
+      model: "gpt-5-nano",
+      //using messages tells the model how to behave and what to respond to
+      messages: [
+        {
+          //system role = model's rules and personality
+          role: "system",
+          content: systemPrompt.trim(), // trim just gets rid of white space sent to the model
+        },
+        {
+          //user role = input from vscode error
+          role: "user",
+          content:
+            `Translate this compiler/runtime  error in plain English and provide steps to fix it : 
                 ERROR:
-                ${error}`.trim()// cleans up white space
-            }
-        ], 
-        temperature: 0.2 //increased creativity because I want it to use puns  and be friendly
-        
+                ${error}`.trim(), // cleans up white space
+        },
+      ],
+      temperature: 0.2, //increased creativity because I want it to use puns  and be friendly
     });
     //save the response in a variable
-    const aiMessage = aiResponse.choices[0].message.content ;
-    
-    // handle  the response if you receive a valid one or an invalid one
-    if(!aiMessage){// checks if the message is invalid
-      return "🦦 Otter try again, this one is out of my depth. 🌊";  //Throw message to show valid aiMessage wasn't recieved
-    }
-    return  aiMessage.trim();
+    const aiMessage = aiResponse.choices[0].message.content;
 
-        // Original attempt with ternary:
-        // aiResponse.choices[0].message.content ? aiResponse.choices[0].message.content : "🦦 Otter try again, this one is out of my depth.🌊"
-       
-    
-}catch(err){
+    // handle  the response if you receive a valid one or an invalid one
+    if (!aiMessage) {
+      // checks if the message is invalid
+      return "🦦 Otter try again, this one is out of my depth. 🌊"; //Throw message to show valid aiMessage wasn't recieved
+    }
+    return aiMessage.trim();
+
+    // Original attempt with ternary:
+    // aiResponse.choices[0].message.content ? aiResponse.choices[0].message.content : "🦦 Otter try again, this one is out of my depth.🌊"
+  } catch (err) {
     console.error("Error Occurred with Translation:", err);
-    
+
     return `🦦 Otter can't sea a translation to that error. Please check your API key or network connection and dive back in.`;
-}   
+  }
 }
