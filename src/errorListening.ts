@@ -1,7 +1,26 @@
 import * as vscode from 'vscode';
 
 // pass provider in so function knows where to send the data if we're sending it to the webview -> if it goes to the panel, we may need that panel instance to be saved outside of the context.subscriptions.push() so we can pass the variable in?? Or maybe we just invoke the function to listen for the user highlights from inside that .push?
+interface ErrorFormat {
+  message: string;
+  code: number | string;
+  source: string;
+  fileSource: string;
+  snippet: string;
+  selectedText: string;
+  errorContext: string;
+}
+
 export function errorListener(provider: any) {
+/* D Notes
+here is where we place the editor with  activated text
+check if  activated text is happening if not return null/ nothing 
+
+
+*/
+
+
+
   // make async in order to access code snippet
   return vscode.languages.onDidChangeDiagnostics(async (event) => {
     // 'event' contains the Uris of the files with changed diagnostics
@@ -19,10 +38,24 @@ export function errorListener(provider: any) {
       //but, the stuff below is still inside of the for...of loop and requires access to the uris
 
       if (errors.length > 0) {
+        
         // returns promise with the TextDocument object (the current file in the text editor)
         const document = await vscode.workspace.openTextDocument(uri);
-        //NOTE: the objects in the errors array have these properties -> code: <code # related to specific error>, message: <error message>, range: start:{character: 1st ch, line: 1st line}, end: {character: last ch, line: last line}, severity: "Error", source: <from linter, or built-in typescript checker, etc> IMPT: vscode uses 0 based indexing, so character 0 means the first character
-        // definitely include "source" in AI call because it provides impt info about the type of error, if it will break code or is just stylistic, etc, also pass the "code" because it helps reduce hallucinations and ties directly to error documentation the ai can use
+
+        //FOR LATER: send a message to otter webview letting it know there are errors
+          // front end can use this to update the emote state
+        
+        //FIRST: have to add the highlight text function inside of this function so we can access the variables "selection", "selectionRange", "languageId" (this is not currently on our interface, but maybe should be?)
+
+        //NEXT: use array method errors.find() to return the element/diagnostic with an err.range.start.line that matches the selectionRange of the highlighted text -> const matchingError = errors.find(<whatever gets passed in here>)
+          //FOR EDGE CASES: if there are multiple errors on the same line, we may want to also compare the "selection" text to the code snippet (see how to access it below) to be sure we're grabbing the correct error diagnostic
+
+        //THEN: 
+          // get the larger context range (rewrite how that's done below)
+          // grab the relevant properties from the matching diagnostic error
+          // bundle the above, along with other error info from the interface into the return object 
+
+
         const errorData = errors.map((err) => {
           const startLine = Math.max(0, err.range.start.line - 3);
           const endLine = Math.min(
@@ -58,5 +91,16 @@ export function errorListener(provider: any) {
       }
     }
   });
+  /*   
+  return ({
+  message: diagnostic.message
+  code: diagnostic.code
+  source: diagnostic.source
+  fileSource: diagnostic.fileSource
+  snippet: string;
+  selectedText: string;
+  errorContext: string;
+  })
+  */
 }
 
