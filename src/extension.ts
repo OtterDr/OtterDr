@@ -5,10 +5,6 @@
 // import { readFileSync } from "fs";
 // import { errorListener } from "./errorListening";
 
-// /* CHANGES KATY MADE:
-//  * errorListener function defined in errorListening.ts, imported here and invoked with disposable
-//  * package.json, updated activationEvents to include "onStartupFinished" which makes the extension activate after VS Code has finished its main startup process -> then calls the activate function. best practice over * wildcard because it doesn't impact overall startup
-//  */
 
 // export function activate(context: vscode.ExtensionContext) {
 //   console.log("🔴 OtterDr ACTIVATING!");
