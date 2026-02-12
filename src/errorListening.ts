@@ -42,7 +42,7 @@ export function errorListener(provider: any) {
             return document.getText(contextRange);
           }
         }));
-        console.log('Error Data:', errorData);
+        console.log('Extension side error Data:', errorData);
         // send the errors to the provider
         provider.sendErrorsToWebview(errorData);
       }
