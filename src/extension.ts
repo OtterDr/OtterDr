@@ -3,7 +3,7 @@ import * as vscode from "vscode";
 import { ExtensionContext, ExtensionMode, Uri, Webview } from "vscode";
 import { MessageHandlerData } from "@estruyf/vscode";
 import { readFileSync } from "fs";
-import { errorListener } from "./errorListening";
+import { errorListener, errorSelection } from "./errorListening";
 
 
 export function activate(context: vscode.ExtensionContext) {
@@ -11,26 +11,36 @@ export function activate(context: vscode.ExtensionContext) {
   const provider = new OtterViewProvider(context.extensionUri); // this is supposed to create a new Instance of the otterview? the class is created later
 
   // For highlighting & selecting text in code -- Trying it as a command
+  const errorSelection1 = errorSelection(); 
   context.subscriptions.push(
     vscode.commands.registerCommand("otterDr.highlightedTextGrab", () =>{
-  const editor = vscode.window.activeTextEditor;
-  if (editor) {
-    const selection = editor.selection;
-    let languageId = editor.document.languageId; // For grabbing the coding language!! --- WIP from Hyeyoon
-    if (selection && !selection.isEmpty) {
-      const selectionRange = new vscode.Range(
-        selection.start.line,
-        selection.start.character,
-        selection.end.line,
-        selection.end.character
-      );
-// dnotes-  new var to hold invocation of errorlistener
-      const text = editor.document.getText(selectionRange);
-      vscode.window.showInformationMessage(`The selected text is: ${text}`);
-      console.log(`The selected text is: ${text}`);
-      // let copiedText = vscode.env.clipboard.writeText(text); // For copy pasting the highlighted text to local clipboard of user  
-    }
-  }
+      // "otterDr.highlightedTextGrab" should be changed to "otterDr.AskOtter"
+      // dnotes-  new var to hold invocation of errorlistener
+      //create error selection func in errorlistening t
+      if (!errorSelection1){
+        console.log("do Nothing")
+      }
+      vscode.window.showInformationMessage(`${errorSelection1}`);
+      // errorContext;
+
+//   const editor = vscode.window.activeTextEditor;
+//   if (editor) {
+//     const selection = editor.selection;
+//     let languageId = editor.document.languageId; // For grabbing the coding language!! --- WIP from Hyeyoon
+//     if (selection && !selection.isEmpty) {
+//       const selectionRange = new vscode.Range(
+//         selection.start.line,
+//         selection.start.character,
+//         selection.end.line,
+//         selection.end.character
+//       );
+//       const text = editor.document.getText(selectionRange);
+//       vscode.window.showInformationMessage(`The selected text is: ${text}`);
+//       console.log(`The selected text is: ${text}`);
+//     // D Notes - this is where we expect ai translation to be handled for display
+//       // let copiedText = vscode.env.clipboard.writeText(text); // For copy pasting the highlighted text to local clipboard of user  
+//     }
+//   }
 }))
 
   // For displaying the otter on explorer -- Completed!
@@ -51,6 +61,7 @@ export function activate(context: vscode.ExtensionContext) {
   );
 
   // Register a command for Status Bar Item: For displaying the OtterDr error analysis on a separate tab
+
   context.subscriptions.push(
     vscode.commands.registerCommand("otterDr.openWebview", () => {
       // Create and show a new webview
@@ -82,7 +93,7 @@ export function activate(context: vscode.ExtensionContext) {
   myStatusBarItem.text = "🦦 OtterDr";
   myStatusBarItem.show();
 
-  let disposable = errorListener(provider);
+  let disposable = errorListener();
 
   context.subscriptions.push(disposable);
 }
@@ -133,16 +144,16 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
      <body>
        <div id="root"></div>
        <img src ="${image}" alt= "Otter image">
-          <script>
-          const vscode = acquireVsCodeApi();
-          window.addEventListener('message', event => {
-          const message = event.data;
-          if (message.type === 'SET_ERRORS') {
-          console.log("Error count in webview:", message.errors.length);
-          console.log("Webview recieved error data:", message.errors);
-            }
-          });
-          </script>
+          // <script>
+          // const vscode = acquireVsCodeApi();
+          // window.addEventListener('message', event => {
+          // const message = event.data;
+          // if (message.type === 'SET_ERRORS') {
+          // console.log("Error count in webview:", message.errors.length);
+          // console.log("Webview recieved error data:", message.errors);
+          //   }
+          // });
+          // </script>
      </body>
      </html>`;
   }
