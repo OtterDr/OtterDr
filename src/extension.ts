@@ -5,52 +5,20 @@ import { MessageHandlerData } from "@estruyf/vscode";
 import { readFileSync } from "fs";
 import { errorListener } from "./errorListening";
 
-/* CHANGES KATY MADE:
- * errorListener function defined in errorListening.ts, imported here and invoked with disposable
- * package.json, updated activationEvents to include "onStartupFinished" which makes the extension activate after VS Code has finished its main startup process -> then calls the activate function. best practice over * wildcard because it doesn't impact overall startup
- */
 
 export function activate(context: vscode.ExtensionContext) {
   console.log("🔴 OtterDr ACTIVATING!");
-  const provider = new OtterViewProvider(context.extensionUri); // this is supposed to create a new Instance of the otterview? the class is created later
 
-  // For highlighting & selecting text in code -- Trying it as a command
-  context.subscriptions.push(
-    vscode.commands.registerCommand("otterDr.highlightedTextGrab", () =>{
-  const editor = vscode.window.activeTextEditor;
-  if (editor) {
-    const selection = editor.selection;
-    let languageId = editor.document.languageId; // For grabbing the coding language!! --- WIP from Hyeyoon
-    if (selection && !selection.isEmpty) {
-      const selectionRange = new vscode.Range(
-        selection.start.line,
-        selection.start.character,
-        selection.end.line,
-        selection.end.character
-      );
-      const text = editor.document.getText(selectionRange);
-      vscode.window.showInformationMessage(`The selected text is: ${text}`);
-      console.log(`The selected text is: ${text}`);
-      // let copiedText = vscode.env.clipboard.writeText(text); // For copy pasting the highlighted text to local clipboard of user  
-    }
-  }
-}))
+  // Creates a new Instance of the otterview
+  // !!OtterViewProvider class is created later, outside of the activate function!!
+  const provider = new OtterViewProvider(context.extensionUri);
 
-  // For displaying the otter on explorer -- Completed!
+  // For displaying the otter image on explorer
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider(
       OtterViewProvider.viewType,
       provider
     )
-  );
-
-  // Register a command for Status Bar Item: For showing small message window on bottom
-  context.subscriptions.push(
-    vscode.commands.registerCommand("sample.showSelectionCount", () => {
-      vscode.window.showInformationMessage(
-        `OtterDr is now diving into your code...🤿🪸`
-      );
-    })
   );
 
   // Register a command for Status Bar Item: For displaying the OtterDr error analysis on a separate tab
@@ -61,23 +29,57 @@ export function activate(context: vscode.ExtensionContext) {
         "webview-id", // Identifies the type of the webview. Used internally
         "OtterDr Diagnosis 🦦", // Title of the panel displayed to the user
         vscode.ViewColumn.Two, // Editor column to show the new webview panel in. (Opens it on the side as a split editor 'tab'!)
-        {} // Webview options. More on these later.
+        {
+          //Enable Javascript/React in the webview
+          enableScripts: true,
+        } // Webview options. More on these later.
+      );
+      panel.webview.html = `<!DOCTYPE html>
+     <html lang="en">
+     <head>
+       <meta charset="UTF-8">
+       <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     </head>
+     <body>
+       <div id="root"> hi </div>
+     </body>
+     </html>`;
+    })
+  );
+
+  // Register a command for Status Bar Item: For highlighting & selecting text in code
+  context.subscriptions.push(
+    vscode.commands.registerCommand("otterDr.highlightedTextGrab", () => {
+      const editor = vscode.window.activeTextEditor;
+      if (editor) {
+        const selection = editor.selection;
+        let languageId = editor.document.languageId; // For grabbing the coding language!! --- WIP from Hyeyoon
+        if (selection && !selection.isEmpty) {
+          const selectionRange = new vscode.Range(
+            selection.start.line,
+            selection.start.character,
+            selection.end.line,
+            selection.end.character
+          );
+          const text = editor.document.getText(selectionRange);
+          vscode.window.showInformationMessage(`The selected text is: ${text}`);
+          console.log(`The selected text is: ${text}`);
+          // let copiedText = vscode.env.clipboard.writeText(text); // For copy pasting the highlighted text to local clipboard of user
+        }
+      }
+    })
+  );
+
+  // Register a command for Status Bar Item: For showing small message window on bottom
+  context.subscriptions.push(
+    vscode.commands.registerCommand("otterDr.showStatusBarMessage", () => {
+      vscode.window.showInformationMessage(
+        `OtterDr is now diving into your code...🤿🪸`
       );
     })
   );
 
-  // A command for simultaneously running multiple commands!
-  context.subscriptions.push(
-    vscode.commands.registerCommand("extension.allCommands", async () => {
-      await vscode.commands.executeCommand("sample.showSelectionCount");
-      await vscode.commands.executeCommand("otterDr.openWebview");
-      await vscode.commands.executeCommand("otterDr.highlightedTextGrab");
-      // Katy's thoughts: Maybe this is where we can add a command that sends the highlighted code + error message (diagnostics) to the backend part, when the otter statusbar button is clicked
-      // Whatever is sent to backend should be in a JSON format
-    })
-  );
-  
-  // Create a new status bar item that we can now manage (Also lets commands above run when clicked) -- Completed!
+  // Creates a new status bar item that we can now manage (Also lets commands above run when clicked)
   const myStatusBarItem = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Right,
     100
@@ -87,12 +89,24 @@ export function activate(context: vscode.ExtensionContext) {
   myStatusBarItem.text = "🦦 OtterDr";
   myStatusBarItem.show();
 
-  let disposable = errorListener();
+  // A command for simultaneously running multiple commands!
+  context.subscriptions.push(
+    vscode.commands.registerCommand("extension.allCommands", async () => {
+      await vscode.commands.executeCommand("otterDr.showStatusBarMessage");
+      await vscode.commands.executeCommand("otterDr.openWebview");
+      await vscode.commands.executeCommand("otterDr.highlightedTextGrab");
 
+      // Whatever is sent to backend should be in a JSON format
+    })
+  );
+
+  // From errorListening.ts
+  let disposable = errorListener();
   context.subscriptions.push(disposable);
 }
 
-//Creating OtterViewProvider -- Completed!
+//CLASS
+//Creating OtterViewProvider (Displays otter image)
 class OtterViewProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = "otterDr.otterView";
   private _view?: vscode.WebviewView;
@@ -108,32 +122,55 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
     webviewView.webview.options = {
       // Allow scripts in the webview
       enableScripts: true,
+      // Restricts webview to loading content only from our extension ("localResourceRoots defines a set of root URIs from which local content may be loaded" - https://code.visualstudio.com/api/extension-guides/webview#controlling-access-to-local-resources)
       localResourceRoots: [this._extensionUri],
     };
 
     webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
   }
-  private _getHtmlForWebview(webview: vscode.Webview) {
-    const image = webview.asWebviewUri(
-      vscode.Uri.joinPath(this._extensionUri, "assets", "Default Image.png")
-    );
+  
+  // private _getHtmlForWebview(webview: vscode.Webview) {
+  //   const image = webview.asWebviewUri(
+  //     vscode.Uri.joinPath(this._extensionUri, "assets", "Default Image.png")
+  //   );
 
-    return `<!DOCTYPE html>
+  //   return `<!DOCTYPE html>
+  //    <html lang="en">
+  //    <head>
+  //      <meta charset="UTF-8">
+  //      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  //    </head>
+  //    <body>
+  //      <div id="root"></div>
+  //      <img src ="${image}" alt= "Otter image">
+  //    </body>
+  //    </html>`;
+  // }
+
+
+  private _getHtmlForWebview(webview: vscode.Webview) {
+    let scriptSrc = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "src", "webview", "index.tsx"))
+
+    let cssSrc = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "src", "webview", "styles.css"))
+
+
+     return `<!DOCTYPE html>
      <html lang="en">
-     <head>
-       <meta charset="UTF-8">
-       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-     </head>
-     <body>
-       <div id="root"></div>
-       <img src ="${image}" alt= "Otter image">
-     </body>
-     </html>`;
+       <head>
+         <link rel="stylesheet" href="${cssSrc}" />
+       </head>
+       <body>
+         <noscript>You need to enable JavaScript to run this app.</noscript>
+         <div id="root"></div>
+         <script src="${scriptSrc}"></script>
+       </body>
+     </html>
+     `
   }
 }
 
 // // this method is called when your extension is deactivated
-// export function deactivate() {}
+export function deactivate() {}
 
 //  =============== Some Notes =================
 //  webviewView = instance of vscode.WebviewView; represents a custom view you registered

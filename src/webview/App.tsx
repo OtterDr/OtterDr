@@ -3,6 +3,7 @@ import { messageHandler } from '@estruyf/vscode/dist/client';
 import "./styles.css";
 
 
+
 export interface IAppProps {}
 
 export const App: React.FunctionComponent<IAppProps> = ({ }: React.PropsWithChildren<IAppProps>) => {
@@ -46,8 +47,9 @@ export const App: React.FunctionComponent<IAppProps> = ({ }: React.PropsWithChil
           Get data with error
         </button>
       </div>
+      
       <div>
-         <img src="https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif" width="300"></img>
+         <img src="/assets/Default Image.png" width="300"></img>
       </div>
 
       {message && <p><strong>Message from the extension</strong>: {message}</p>}
