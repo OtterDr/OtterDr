@@ -14,13 +14,41 @@ export function activate(context: vscode.ExtensionContext) {
   const provider = new OtterViewProvider(context.extensionUri);
 
 // For displaying the otter image on explorer
+  // context.subscriptions.push(
+  //   vscode.window.registerWebviewViewProvider(
+  //     OtterViewProvider.viewType,
+  //     provider
+  //   )
+  // );
+
+  // React test
   context.subscriptions.push(
-    vscode.window.registerWebviewViewProvider(
+    vscode.commands.registerCommand('react-test.test', () => {
+
+    let panel: any = vscode.window.registerWebviewViewProvider(
       OtterViewProvider.viewType,
       provider
     )
-  );
 
+    let scriptSrc = panel.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, "src", "webview", "index.tsx"))
+
+    let cssSrc = panel.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, "src", "webview", "styles.css"))
+
+    panel.html = `<!DOCTYPE html>
+    <html lang="en">
+      <head>
+        <link rel="stylesheet" href="${cssSrc}" />
+      </head>
+      <body>
+        <noscript>You need to enable JavaScript to run this app.</noscript>
+        <div id="root"></div>
+        <script src="${scriptSrc}"></script>
+      </body>
+    </html>
+    `
+})
+);
+  
   // Register a command for Status Bar Item: For displaying the OtterDr error analysis on a separate tab & For highlighting & selecting text in code, sending error to backend and receiving response
   context.subscriptions.push(
     vscode.commands.registerCommand("otterDr.openWebview", () => {
@@ -78,9 +106,11 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand("extension.allCommands", async () => {
       await vscode.commands.executeCommand("otterDr.showStatusBarMessage");
       await vscode.commands.executeCommand("otterDr.openWebview");
+      await vscode.commands.executeCommand("react-test.test");
       // Whatever is sent to backend should be in a JSON format
     })
   );
+  
 
   // From errorListening.ts
   let disposable = errorListener();
@@ -121,24 +151,49 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
     webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
   }
 
-  private _getHtmlForWebview(webview: vscode.Webview) {
-    const image = webview.asWebviewUri(
-      vscode.Uri.joinPath(this._extensionUri, "assets", "Default Image.png")
-    );
+  // private _getHtmlForWebview(webview: vscode.Webview) {
+  //   const image = webview.asWebviewUri(
+  //     vscode.Uri.joinPath(this._extensionUri, "assets", "Default Image.png")
+  //   );
 
-    return `<!DOCTYPE html>
+  //   return `<!DOCTYPE html>
+  //    <html lang="en">
+  //    <head>
+  //      <meta charset="UTF-8">
+  //      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  //    </head>
+  //    <body>
+  //      <div id="root"></div>
+  //      <img src ="${image}" alt= "Otter image">
+  //    </body>
+  //    </html>`;
+  // }
+
+  // Experimenting for React
+  private _getHtmlForWebview(webview: vscode.Webview) {
+    let scriptSrc = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "src", "webview", "index.tsx"))
+    let cssSrc = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "src", "webview", "styles.css"))
+
+
+     return `<!DOCTYPE html>
      <html lang="en">
-     <head>
-       <meta charset="UTF-8">
-       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-     </head>
-     <body>
-       <div id="root"></div>
-       <img src ="${image}" alt= "Otter image">
-     </body>
-     </html>`;
+       <head>
+         <link rel="stylesheet" href="${cssSrc}" />
+       </head>
+       <body>
+         <noscript>You need to enable JavaScript to run this app.</noscript>
+         <div id="root"></div>
+         <script src="${scriptSrc}"></script>
+       </body>
+     </html>
+     `
   }
+
+
+
 }
+
+
 
 // // this method is called when your extension is deactivated
 export function deactivate() {}
