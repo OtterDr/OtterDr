@@ -4,19 +4,18 @@ import * as vscode from 'vscode';
 // K-Notes: need to change html return from otterDrView to remove script part
 interface ErrorFormat {
   message: string;
-  code: number;
+  code:  number ;
   source: string;
-  fileSource: string | undefined;
-  selectedText: string;
+  fileSource: string ;
+  selectedText: string | undefined;
   errorContext: string; // additional lines of code 3 before and 3 after
 }
 
-// create separate functions
-// 1. errorListener - just listens for errors and tells otter when there's more than one
-// 2. errorSelection - listen for highlighted stuff, bundle pertinent info, make ai fetch request
+
 
 //K-Notes, if we want only errors for active editor, we need a listener for diagnostic changes and a listener for when user switches files, then have function that can be called from either listener that recalculates the error count
 
+// 1. errorListener - just listens for errors and tells otter when there's more than one
 export function errorListener() {
   return vscode.languages.onDidChangeDiagnostics((event) => {
     // 'event' contains the Uris of the files with changed diagnostics
@@ -32,23 +31,34 @@ export function errorListener() {
   // if (errors.length > 0) { return update otteremotes}
 }
 
+// 2. errorSelection - listen for highlighted stuff, bundle pertinent info, make ai fetch request
 export function errorSelection() {
+  console.log('inside errorSelection');
   const editor = vscode.window.activeTextEditor; // this grabs the active text editor
   let selectedText;
 
   if (!editor) return null; // if nothing active do nothing
-
+ const document = editor.document;
   const editorUri = editor.document.uri;
   const diagnostics = vscode.languages.getDiagnostics(editorUri); //grab all errors first
+  console.log('editorUri: ', editorUri);
 
   //lets iterate through diagnostics with the find method to see if highlight matches an existing location and if severity === error
   const selection = editor.selection;
+  console.log('selection: ', selection)
+
   const selectedError = diagnostics.find((diagnostic) => {
-    diagnostic.severity === vscode.DiagnosticSeverity.Error &&
-      selection.start.line === diagnostic.range.start.line;
+    return (
+      diagnostic.severity === vscode.DiagnosticSeverity.Error &&
+        selection.start.line === diagnostic.range.start.line
+    )
   });
+
+  if(!selectedError)return null;
+
+  console.log('selected error: ', selectedError);
   //grab range to show 3 lines before and after , compare to active errors in diagnostic array
-  let languageId = editor.document.languageId; // For grabbing the coding language!! --- WIP from Hyeyoon
+
   if (selection && !selection.isEmpty) {
     const selectionRange = new vscode.Range(
       selection.start.line,
@@ -57,10 +67,11 @@ export function errorSelection() {
       selection.end.character,
     );
     selectedText = editor.document.getText(selectionRange);
-    return selectedText;
+    console.log('selected text: ', selectedText);
+    // return selectedText;
   }
-
-  if (!selectedError) return null; // if there's no error, don't do anything
+   console.log('what is here?');
+  if (!selectedError){ return null}; // if there's no error, don't do anything
   const startLine = selectedError.range.start.line; // grab start line
   const endLine = selectedError.range.end.line; // grab endline
   const newStartLine = Math.max(0, startLine - 3); // make a var for new start to - 3
@@ -69,29 +80,36 @@ export function errorSelection() {
   // new range and pass in new positions
   // get line at text.length
 
+  
   const contextRange = new vscode.Range(
     new vscode.Position(newStartLine, 0),
     new vscode.Position(
       newEndLine,
-      editor.document.lineAt(newEndLine).text.length,
-    ),
+      document.lineAt(newEndLine).text.length
+    )
   );
+  
+  console.log('context range: ', contextRange);
 
   // Get the text once
   const errorContext = editor.document.getText(contextRange);
-
+console.log("error Context:",errorContext)
   const formattedError = {
     message: selectedError.message,
     code: selectedError.code,
     source: selectedError.source,
-    fileSource: editorUri,
+    fileSource: editorUri.fsPath,
     selectedText: selectedText,
     errorContext: errorContext,
   }
-console.log(formattedError)
-  return {
-    formattedError
-  };
+ console.log(formattedError)
+  // typed error to send to AI
+  const typedErrors : ErrorFormat = formattedError as ErrorFormat;
+console.log("typederrors:",typedErrors)
+  return (
+    JSON.stringify(typedErrors)
+  )
+  
 }
 
 // returns promise with the TextDocument object (the current file in the text editor)

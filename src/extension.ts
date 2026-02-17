@@ -11,16 +11,18 @@ export function activate(context: vscode.ExtensionContext) {
   const provider = new OtterViewProvider(context.extensionUri); // this is supposed to create a new Instance of the otterview? the class is created later
 
   // For highlighting & selecting text in code -- Trying it as a command
-  const errorSelection1 = errorSelection(); 
   context.subscriptions.push(
     vscode.commands.registerCommand("otterDr.highlightedTextGrab", () =>{
+      
+      const errorSelectionResult = errorSelection(); 
       // "otterDr.highlightedTextGrab" should be changed to "otterDr.AskOtter"
       // dnotes-  new var to hold invocation of errorlistener
       //create error selection func in errorlistening t
-      if (!errorSelection1){
-        console.log("do Nothing")
+      if (!errorSelectionResult){
+        console.log("do Nothing");
+        return;
       }
-      vscode.window.showInformationMessage(`${errorSelection1}`);
+      vscode.window.showInformationMessage(`${errorSelectionResult}`);
       // errorContext;
 
 //   const editor = vscode.window.activeTextEditor;
