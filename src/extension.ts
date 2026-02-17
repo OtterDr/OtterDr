@@ -3,12 +3,8 @@ import * as vscode from "vscode";
 import { ExtensionContext, ExtensionMode, Uri, Webview } from "vscode";
 import { MessageHandlerData } from "@estruyf/vscode";
 import { readFileSync } from "fs";
-import { errorListener } from "./errorListening";
+import { errorListener, errorSelection } from "./errorListening";
 
-/* CHANGES KATY MADE:
- * errorListener function defined in errorListening.ts, imported here and invoked with disposable
- * package.json, updated activationEvents to include "onStartupFinished" which makes the extension activate after VS Code has finished its main startup process -> then calls the activate function. best practice over * wildcard because it doesn't impact overall startup
- */
 
 export function activate(context: vscode.ExtensionContext) {
   console.log("🔴 OtterDr ACTIVATING!");
@@ -17,23 +13,36 @@ export function activate(context: vscode.ExtensionContext) {
   // For highlighting & selecting text in code -- Trying it as a command
   context.subscriptions.push(
     vscode.commands.registerCommand("otterDr.highlightedTextGrab", () =>{
-  const editor = vscode.window.activeTextEditor;
-  if (editor) {
-    const selection = editor.selection;
-    let languageId = editor.document.languageId; // For grabbing the coding language!! --- WIP from Hyeyoon
-    if (selection && !selection.isEmpty) {
-      const selectionRange = new vscode.Range(
-        selection.start.line,
-        selection.start.character,
-        selection.end.line,
-        selection.end.character
-      );
-      const text = editor.document.getText(selectionRange);
-      vscode.window.showInformationMessage(`The selected text is: ${text}`);
-      console.log(`The selected text is: ${text}`);
-      // let copiedText = vscode.env.clipboard.writeText(text); // For copy pasting the highlighted text to local clipboard of user  
-    }
-  }
+      
+      const errorSelectionResult = errorSelection(); 
+      // "otterDr.highlightedTextGrab" should be changed to "otterDr.AskOtter"
+      // dnotes-  new var to hold invocation of errorlistener
+      //create error selection func in errorlistening t
+      if (!errorSelectionResult){
+        console.log("do Nothing");
+        return;
+      }
+      vscode.window.showInformationMessage(`${errorSelectionResult}`);
+      // errorContext;
+
+//   const editor = vscode.window.activeTextEditor;
+//   if (editor) {
+//     const selection = editor.selection;
+//     let languageId = editor.document.languageId; // For grabbing the coding language!! --- WIP from Hyeyoon
+//     if (selection && !selection.isEmpty) {
+//       const selectionRange = new vscode.Range(
+//         selection.start.line,
+//         selection.start.character,
+//         selection.end.line,
+//         selection.end.character
+//       );
+//       const text = editor.document.getText(selectionRange);
+//       vscode.window.showInformationMessage(`The selected text is: ${text}`);
+//       console.log(`The selected text is: ${text}`);
+//     // D Notes - this is where we expect ai translation to be handled for display
+//       // let copiedText = vscode.env.clipboard.writeText(text); // For copy pasting the highlighted text to local clipboard of user  
+//     }
+//   }
 }))
 
   // For displaying the otter on explorer -- Completed!
@@ -54,6 +63,7 @@ export function activate(context: vscode.ExtensionContext) {
   );
 
   // Register a command for Status Bar Item: For displaying the OtterDr error analysis on a separate tab
+
   context.subscriptions.push(
     vscode.commands.registerCommand("otterDr.openWebview", () => {
       // Create and show a new webview
@@ -72,8 +82,6 @@ export function activate(context: vscode.ExtensionContext) {
       await vscode.commands.executeCommand("sample.showSelectionCount");
       await vscode.commands.executeCommand("otterDr.openWebview");
       await vscode.commands.executeCommand("otterDr.highlightedTextGrab");
-      // Katy's thoughts: Maybe this is where we can add a command that sends the highlighted code + error message (diagnostics) to the backend part, when the otter statusbar button is clicked
-      // Whatever is sent to backend should be in a JSON format
     })
   );
   
@@ -99,6 +107,16 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
 
   constructor(private readonly _extensionUri: vscode.Uri) {}
 
+// method to push error data to the webview
+// CHANGE BELOW - only send a message telling otterView that there's an error, no error info
+  public sendErrorsToWebview(errors: vscode.Diagnostic[]) {
+    if (this._view) {
+     this._view.webview.postMessage({
+        type: 'SET_ERRORS',
+        errors: errors, // array of error objects
+      });
+    }
+  }
   public resolveWebviewView(
     webviewView: vscode.WebviewView,
     _context: vscode.WebviewViewResolveContext
@@ -113,6 +131,7 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
 
     webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
   }
+
   private _getHtmlForWebview(webview: vscode.Webview) {
     const image = webview.asWebviewUri(
       vscode.Uri.joinPath(this._extensionUri, "assets", "Default Image.png")
@@ -127,16 +146,26 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
      <body>
        <div id="root"></div>
        <img src ="${image}" alt= "Otter image">
+          // <script>
+          // const vscode = acquireVsCodeApi();
+          // window.addEventListener('message', event => {
+          // const message = event.data;
+          // if (message.type === 'SET_ERRORS') {
+          // console.log("Error count in webview:", message.errors.length);
+          // console.log("Webview recieved error data:", message.errors);
+          //   }
+          // });
+          // </script>
      </body>
      </html>`;
   }
 }
 
-// // this method is called when your extension is deactivated
+// method. Usually returns a valid HTML in the form of a string
 // export function deactivate() {}
 
 //  =============== Some Notes =================
 //  webviewView = instance of vscode.WebviewView; represents a custom view you registered
 // webviewView.webview = VERY important for images! The actual webview object inside that container. Can render JS, HTML, CSS, images (with some rules) and behaves like a sandboxed browser
 // webviewView.webview.html --> Is a property (NOT function), when you assign string to it VS Code loads it as full HTML doc
-// this._getHtmlForWebview --> The method. Usually returns a valid HTML in the form of a string
+// this._getHtmlForWebview --> The 
