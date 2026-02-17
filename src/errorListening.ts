@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 
 // pass provider in so function knows where to send the data if we're sending it to the webview -> if it goes to the panel, we may need that panel instance to be saved outside of the context.subscriptions.push() so we can pass the variable in?? Or maybe we just invoke the function to listen for the user highlights from inside that .push?
 // K-Notes: need to change html return from otterDrView to remove script part
-interface ErrorFormat {
+export interface ErrorFormat {
   message: string;
   code:  number ;
   source: string;
@@ -111,6 +111,7 @@ console.log("typederrors:",typedErrors)
   )
   
 }
+
 
 // returns promise with the TextDocument object (the current file in the text editor)
 

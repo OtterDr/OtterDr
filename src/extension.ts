@@ -4,6 +4,7 @@ import { ExtensionContext, ExtensionMode, Uri, Webview } from "vscode";
 import { MessageHandlerData } from "@estruyf/vscode";
 import { readFileSync } from "fs";
 import { errorListener, errorSelection } from "./errorListening";
+import { otterTranslation } from "./aiTranslator";
 
 
 export function activate(context: vscode.ExtensionContext) {
@@ -23,7 +24,7 @@ export function activate(context: vscode.ExtensionContext) {
 
   // Register a command for Status Bar Item: For displaying the OtterDr error analysis on a separate tab & For highlighting & selecting text in code, sending error to backend and receiving response
   context.subscriptions.push(
-    vscode.commands.registerCommand("otterDr.openWebview", () => {
+    vscode.commands.registerCommand("otterDr.openWebview", async () => {
       // Create and show a new webview
       const panel = vscode.window.createWebviewPanel(
         "webview-id", // Identifies the type of the webview. Used internally
@@ -41,6 +42,11 @@ export function activate(context: vscode.ExtensionContext) {
         return;
       }
 
+    //import our apikey
+    const apiKey = "add Api Key Here"//add apikey here
+    //invoke our aitranslator
+    const aiResponse = await otterTranslation(errorSelectionResult, apiKey);
+
       panel.webview.html = `<!DOCTYPE html>
      <html lang="en">
      <head>
@@ -48,7 +54,7 @@ export function activate(context: vscode.ExtensionContext) {
        <meta name="viewport" content="width=device-width, initial-scale=1.0">
      </head>
      <body>
-       <div id="root"> ${errorSelectionResult} </div>
+       <div id="root"> ${aiResponse} </div>
      </body>
      </html>`;
     })
