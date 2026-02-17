@@ -46,7 +46,7 @@ const error = {
 */
 
 export async function otterTranslation(
-  error: object,
+  error: string,
   apiKey: string,
 ): Promise<string> {
   if (!apiKey) {
