@@ -4,6 +4,7 @@ import { ExtensionContext, ExtensionMode, Uri, Webview } from "vscode";
 import { MessageHandlerData } from "@estruyf/vscode";
 import { readFileSync } from "fs";
 import { errorListener, errorSelection } from "./errorListening";
+import { otterTranslation } from "./aiTranslator";
 
 
 export function activate(context: vscode.ExtensionContext) {
@@ -14,44 +15,71 @@ export function activate(context: vscode.ExtensionContext) {
   const provider = new OtterViewProvider(context.extensionUri);
 
 // For displaying the otter image on explorer
-  // context.subscriptions.push(
-  //   vscode.window.registerWebviewViewProvider(
-  //     OtterViewProvider.viewType,
-  //     provider
-  //   )
-  // );
-
-  // React test
   context.subscriptions.push(
-    vscode.commands.registerCommand('react-test.test', () => {
-
-    let panel: any = vscode.window.registerWebviewViewProvider(
+    vscode.window.registerWebviewViewProvider(
       OtterViewProvider.viewType,
       provider
     )
+  );
 
-    let scriptSrc = panel.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, "src", "webview", "index.tsx"))
+//   // React test -- Explorer panel
+//   context.subscriptions.push(
+//     vscode.commands.registerCommand('react-test.test', () => {
 
-    let cssSrc = panel.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, "src", "webview", "styles.css"))
+//     let panel: any = vscode.window.registerWebviewViewProvider(
+//       OtterViewProvider.viewType,
+//       provider
+//     )
 
-    panel.html = `<!DOCTYPE html>
-    <html lang="en">
-      <head>
-        <link rel="stylesheet" href="${cssSrc}" />
-      </head>
-      <body>
-        <noscript>You need to enable JavaScript to run this app.</noscript>
-        <div id="root"></div>
-        <script src="${scriptSrc}"></script>
-      </body>
-    </html>
-    `
-})
-);
+//     let scriptSrc = panel.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, "src", "webview", "index.tsx"))
+
+//     let cssSrc = panel.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, "src", "webview", "styles.css"))
+
+//     panel.html = `<!DOCTYPE html>
+//     <html lang="en">
+//       <head>
+//         <link rel="stylesheet" href="${cssSrc}" />
+//       </head>
+//       <body>
+//         <noscript>You need to enable JavaScript to run this app.</noscript>
+//         <div id="root"></div>
+//         <script src="${scriptSrc}"></script>
+//       </body>
+//     </html>
+//     `
+// })
+// );
+
+// // React test -- Webview panel on separate tab
+//   context.subscriptions.push(
+//     vscode.commands.registerCommand('react-test.test', () => {
+
+//     let panel: any = vscode.window.createWebviewPanel("webview", "React", vscode.ViewColumn.One, {
+//       enableScripts: true
+//   })
+
+//     let scriptSrc = panel.webview.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, "src", "webview", "index.tsx"))
+
+//     let cssSrc = panel.webview.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, "src", "webview", "styles.css"))
+
+//     panel.webview.html = `<!DOCTYPE html>
+//     <html lang="en">
+//       <head>
+//         <link rel="stylesheet" href="${cssSrc}" />
+//       </head>
+//       <body>
+//         <noscript>You need to enable JavaScript to run this app.</noscript>
+//         <div id="root"></div>
+//         <script src="${scriptSrc}"></script>
+//       </body>
+//     </html>
+//     `
+// })
+// );
   
   // Register a command for Status Bar Item: For displaying the OtterDr error analysis on a separate tab & For highlighting & selecting text in code, sending error to backend and receiving response
   context.subscriptions.push(
-    vscode.commands.registerCommand("otterDr.openWebview", () => {
+    vscode.commands.registerCommand("otterDr.openWebview", async () => {
       // Create and show a new webview
       const panel = vscode.window.createWebviewPanel(
         "webview-id", // Identifies the type of the webview. Used internally
@@ -69,6 +97,11 @@ export function activate(context: vscode.ExtensionContext) {
         return;
       }
 
+    //import our apikey
+    const apiKey = "add Api Key Here"//add apikey here
+    //invoke our aitranslator
+    const aiResponse = await otterTranslation(errorSelectionResult, apiKey);
+
       panel.webview.html = `<!DOCTYPE html>
      <html lang="en">
      <head>
@@ -76,7 +109,7 @@ export function activate(context: vscode.ExtensionContext) {
        <meta name="viewport" content="width=device-width, initial-scale=1.0">
      </head>
      <body>
-       <div id="root"> ${errorSelectionResult} </div>
+       <div id="root"> ${aiResponse} </div>
      </body>
      </html>`;
     })
@@ -188,8 +221,6 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
      </html>
      `
   }
-
-
 
 }
 
