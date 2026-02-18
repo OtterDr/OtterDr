@@ -36,7 +36,7 @@ export function activate(context: vscode.ExtensionContext) {
     //functionality to find error based on text or based on problems panel
     let contextText = '';
     if (selectionText) {
-      contextText = selectionText;
+       contextText = selectionText;
     } else if (docDiagnostics.length > 0) {
       contextText = docDiagnostics
       .map(d => `${vscode.DiagnosticSeverity[d.severity]}: ${d.message} (line ${d.range.start.line + 1})`)
