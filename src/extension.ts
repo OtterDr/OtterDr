@@ -1,13 +1,13 @@
-import { join } from 'path';
-import * as vscode from 'vscode';
-import { ExtensionContext, ExtensionMode, Uri, Webview } from 'vscode';
-import { MessageHandlerData } from '@estruyf/vscode';
-import { readFileSync } from 'fs';
-import { errorListener, errorSelection } from './errorListening';
-import { otterTranslation } from './aiTranslator';
+import { join } from "path";
+import * as vscode from "vscode";
+import { ExtensionContext, ExtensionMode, Uri, Webview } from "vscode";
+import { MessageHandlerData } from "@estruyf/vscode";
+import { readFileSync } from "fs";
+import { errorListener, errorSelection } from "./errorListening";
+import { otterTranslation } from "./aiTranslator";
 
 export function activate(context: vscode.ExtensionContext) {
-  console.log('🔴 OtterDr ACTIVATING!');
+  console.log("🔴 OtterDr ACTIVATING!");
 
   // Creates a new Instance of the otterview
   // !!OtterViewProvider class is created later, outside of the activate function!!
@@ -23,11 +23,11 @@ export function activate(context: vscode.ExtensionContext) {
 
   // Register a command for Status Bar Item: For displaying the OtterDr error analysis on a separate tab & For highlighting & selecting text in code, sending error to backend and receiving response
   context.subscriptions.push(
-    vscode.commands.registerCommand('otterDr.openWebview', async () => {
+    vscode.commands.registerCommand("otterDr.openWebview", async () => {
       // Create and show a new webview
       const panel = vscode.window.createWebviewPanel(
-        'webview-id', // Identifies the type of the webview. Used internally
-        'OtterDr Diagnosis 🦦', // Title of the panel displayed to the user
+        "webview-id", // Identifies the type of the webview. Used internally
+        "OtterDr Diagnosis 🦦", // Title of the panel displayed to the user
         vscode.ViewColumn.Two, // Editor column to show the new webview panel in. (Opens it on the side as a split editor 'tab'!)
         {
           //Enable Javascript/React in the webview
@@ -37,14 +37,14 @@ export function activate(context: vscode.ExtensionContext) {
 
       const errorSelectionResult = errorSelection();
       if (!errorSelectionResult) {
-        console.log('do Nothing');
+        console.log("do Nothing");
         return;
       }
 
-      //import our apikey
-      const apiKey = 'add Api Key Here'; //add apikey here
-      //invoke our aitranslator
-      const aiResponse = await otterTranslation(errorSelectionResult, apiKey);
+    //import our apikey
+    const apiKey = "add Api Key Here"//add apikey here
+    //invoke our aitranslator
+    const aiResponse = await otterTranslation(errorSelectionResult, apiKey);
 
       panel.webview.html = `<!DOCTYPE html>
      <html lang="en">
@@ -53,7 +53,18 @@ export function activate(context: vscode.ExtensionContext) {
        <meta name="viewport" content="width=device-width, initial-scale=1.0">
      </head>
      <body>
-       <div id="root"> ${aiResponse} </div>
+       <h2>OtterDr says 🦦</h2>
+
+     <h3>What happened:</h3>
+     <p>${aiResponse.whatHappened}</p>
+
+     <h3>Next Steps 👣:</h3>
+     <ol>
+      ${aiResponse.nextSteps.map((step) => `<li>${step}</li>`).join("")}
+     </ol>
+
+     <h3>Otter thoughts 💭:</h3>
+     <p>${aiResponse.otterThoughts}</p>
      </body>
      </html>`;
     }),
@@ -61,7 +72,7 @@ export function activate(context: vscode.ExtensionContext) {
 
   // Register a command for Status Bar Item: For showing small message window on bottom
   context.subscriptions.push(
-    vscode.commands.registerCommand('otterDr.showStatusBarMessage', () => {
+    vscode.commands.registerCommand("otterDr.showStatusBarMessage", () => {
       vscode.window.showInformationMessage(
         `OtterDr is now diving into your code...🤿🪸`,
       );
@@ -73,16 +84,16 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.StatusBarAlignment.Right,
     100,
   );
-  myStatusBarItem.command = 'extension.allCommands'; //allows the status bar to execute multiple
+  myStatusBarItem.command = "extension.allCommands"; //allows the status bar to execute multiple
   context.subscriptions.push(myStatusBarItem);
-  myStatusBarItem.text = '🦦 OtterDr';
+  myStatusBarItem.text = "🦦 OtterDr";
   myStatusBarItem.show();
 
   // A command for simultaneously running multiple commands!
   context.subscriptions.push(
-    vscode.commands.registerCommand('extension.allCommands', async () => {
-      await vscode.commands.executeCommand('otterDr.showStatusBarMessage');
-      await vscode.commands.executeCommand('otterDr.openWebview');
+    vscode.commands.registerCommand("extension.allCommands", async () => {
+      await vscode.commands.executeCommand("otterDr.showStatusBarMessage");
+      await vscode.commands.executeCommand("otterDr.openWebview");
       // Whatever is sent to backend should be in a JSON format
     }),
   );
@@ -95,7 +106,7 @@ export function activate(context: vscode.ExtensionContext) {
 //CLASS
 //Creating OtterViewProvider (Displays otter image)
 class OtterViewProvider implements vscode.WebviewViewProvider {
-  public static readonly viewType = 'otterDr.otterView';
+  public static readonly viewType = "otterDr.otterView";
   private _view?: vscode.WebviewView;
 
   constructor(private readonly _extensionUri: vscode.Uri) {}
@@ -105,8 +116,8 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
   public sendErrorsToWebview(errors: vscode.Diagnostic[]) {
     if (this._view) {
       this._view.webview.postMessage({
-        type: 'SET_ERRORS',
-        errors: errors, // array of error objects -> can we just change this to errors.length?
+        type: "SET_ERRORS",
+        errors: errors, // array of error objects
       });
     }
   }
@@ -128,7 +139,7 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
 
   private _getHtmlForWebview(webview: vscode.Webview) {
     const image = webview.asWebviewUri(
-      vscode.Uri.joinPath(this._extensionUri, 'assets', 'Default Image.png'),
+      vscode.Uri.joinPath(this._extensionUri, "assets", "Default Image.png"),
     );
 
     return `<!DOCTYPE html>
