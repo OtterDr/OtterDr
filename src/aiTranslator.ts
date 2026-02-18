@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { ErrorFormat } from "./errorListening";
 // import "dotenv/config"; or secretssssss
 
 // create typing for  error : string (Might not be but double check) apiKey: string
@@ -6,7 +7,7 @@ import OpenAI from "openai";
 // use GPT-5 nano (to get full list of available models: const allModels = await vscode.lm.selectChatModels(MODEL_SELECTOR);)
 
 /* LANGUAGE MODEL API STEPS
-1. Build the language model prompt - provides instructions to llm on broad task, defines context in which user messages are interpreted
+1. Build the language model prompt - provides instructions to llm on broad task, defines context where user messages are interpreted
     * vscode.LanguageModelChatMessage.User - for providing instructions and the user's request
     * vscode.LanguageModelChatMessage.Assistant - for adding history of prev llm responses as context to prompt (maybe also examples??)
     * EXAMPLE:
@@ -16,7 +17,7 @@ import OpenAI from "openai";
 2. Send the language model request
     * select llm we want to use with selectChatModels method (returns array of llms matching specified criteria) -> can specify vendor, id, family, or version
     * send request to llm using sendRequest method, passing in prompt, any additional options, and cancellation token
-    * use LanguageModelError to distinguish to distinguish between types of errors
+    * use LanguageModelError to distinguish between types of errors
 3. Interpret the response - streaming based, so add appropriate error handling
     * parseResponse function that accumulates all the response fragments into a whole string, looking out for a closing } to be sure the fragment is finished
 */
@@ -44,39 +45,64 @@ const error = {
  }
 }
 */
+// add typing for the otter response format
+export interface OtterResponse{
+  whatHappened: string;
+  nextSteps:string[];
+  otterThoughts: string;
+}
 
 export async function otterTranslation(
   error: string,
   apiKey: string,
-): Promise<string> {
+): Promise<OtterResponse> {
   if (!apiKey) {
     throw new Error("apiKey is required.");
   }
 
   const systemPrompt = `You are an Otter AI, friendly programming assistant who specializes in compiler and runtime errors. 
+  
+  You will recieve a JSON Object with this exact structure: 
+{
+  "message": string,
+  "code":  number ,
+  "source": string,
+  "fileSource": string ,
+  "selectedText": string | null,
+  "errorContext": string,
+}
 
-    Your job is to : 
-    -Translate technical error messages into clear, plain English.
-    -Use a kind and encouraging tone.
-    -Include a light sea or ocean-themed pun (otter/ocean related) when appropriate.
-    -Provide 2-3 actionable next steps the developer can try.
-    -NOT be sarcastic or overly verbose.
-    -NOT invent solutions unrelated to the error. 
+  RULES: 
+    - Use only the information in the JSON object.
+    - Translate technical error messages into clear, plain English.
+    - Only use the error context to better understand the provided diagnostic error.
+    - Use a kind and encouraging tone.
+    - Do NOT mention JSON, diagnostics, or internal tooling.
+    - Include a light sea or ocean-themed pun (otter/ocean related) when appropriate.
+    - Provide 2-3 actionable next steps the developer can try.
+    - Do NOT be sarcastic.
+    - Do NOT be overly verbose.
+    - Do NOT invent solutions unrelated to the error.
 
-    Format your response exactly like this:
+    If the JSON cannot be parsed, respond with:
+"OtterDr couldn’t understand this error yet — please select a valid compiler error 🦦"
+    
+  OUTPUT FORMAT (follow exactly):
+    Return ONLY valid JSON in this exact shape:
 
-    OtterDr says 🦦:
-    What happened:
-    - <plain English explanation>
+{
+  "whatHappened": string,
+  "nextSteps": string[],
+  "otterThoughts": string
+}
 
-    Next Steps 👣:
-    1.<step 1>
-    2.<step 2>
-    3.<optional step 3>
+   IMPORTANT:
+- Do NOT use Markdown symbols like **, #, -, or bullet characters.
+- Return plain rendered text only.
+- Do not wrap the response in code blocks.
+- Do not add extra sections.
+`;
 
-    Otter thoughts 💭:
-    - <short ocean or otter pun>
-    `;
   try {
     const openai = new OpenAI({ apiKey });
     const aiResponse = await openai.chat.completions.create({
@@ -91,29 +117,54 @@ export async function otterTranslation(
         {
           //user role = input from vscode error
           role: "user",
-          content:
-            `Translate this compiler/runtime  error in plain English and provide steps to fix it : 
-                ERROR:
-                ${error}`.trim(), // cleans up white space
+          content: `Here is the error JSON to translate: ${error}`
         },
       ],
-      temperature: 0.2, //increased creativity because I want it to use puns  and be friendly
+      temperature: 1, //increased creativity because I want it to use puns  and be friendly
     });
     //save the response in a variable
-    const aiMessage = aiResponse.choices[0].message.content;
+    const rawAiMessage = aiResponse.choices[0]?.message?.content;
 
-    // handle  the response if you receive a valid one or an invalid one
-    if (!aiMessage) {
-      // checks if the message is invalid
-      return "🦦 Otter try again, this one is out of my depth. 🌊"; //Throw message to show valid aiMessage wasn't recieved
+    if (!rawAiMessage) {
+      throw new Error("No response content from model");
     }
-    return aiMessage.trim();
+    
+     let parsed: any;
 
-    // Original attempt with ternary:
-    // aiResponse.choices[0].message.content ? aiResponse.choices[0].message.content : "🦦 Otter try again, this one is out of my depth.🌊"
+    try {
+      parsed = JSON.parse(rawAiMessage);// turns error into json
+    } catch (jsonErr) {
+      console.error("Invalid JSON from model:", rawAiMessage);
+      throw new Error("Model returned invalid JSON");
+    }
+
+    return parsed;
+
   } catch (err) {
     console.error("Error Occurred with Translation:", err);
 
-    return `🦦 Otter can't sea a translation to that error. Please check your API key or network connection and dive back in.`;
+    return {// shape error in same format
+      whatHappened: "OtterDr had trouble understanding this error clearly.",
+      nextSteps: [
+        "Try selecting the error again starting with the line with red squiggle.",
+        "Make sure your internet connection is stable."
+      ],
+      otterThoughts: "This error is drifting 🌊"
+    };
   }
+
+  //   // handle  the response if you receive a valid one or an invalid one
+  //   if (!aiMessage || aiMessage.trim().length === 0) {
+  //     // checks if the message is invalid
+  //     return "🦦 Otter try again, this one is out of my depth. 🌊"; //Throw message to show valid aiMessage wasn't recieved
+  //   }
+  //   return JSON.parse(aiMessage);
+
+  //   // Original attempt with ternary:
+  //   // aiResponse.choices[0].message.content ? aiResponse.choices[0].message.content : "🦦 Otter try again, this one is out of my depth.🌊"
+  // } catch (err) {
+  //   console.error("Error Occurred with Translation:", err);
+
+  //   return `🦦 Otter can't sea a translation to that error. Please check your API key or network connection and dive back in.`;
+  // }
 }
