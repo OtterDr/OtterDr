@@ -6,7 +6,6 @@ import { readFileSync } from "fs";
 import { errorListener, errorSelection } from "./errorListening";
 import { otterTranslation } from "./aiTranslator";
 
-
 export function activate(context: vscode.ExtensionContext) {
   console.log("🔴 OtterDr ACTIVATING!");
 
@@ -14,12 +13,12 @@ export function activate(context: vscode.ExtensionContext) {
   // !!OtterViewProvider class is created later, outside of the activate function!!
   const provider = new OtterViewProvider(context.extensionUri);
 
-// For displaying the otter image on explorer
+  // For displaying the otter image on explorer
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider(
       OtterViewProvider.viewType,
-      provider
-    )
+      provider,
+    ),
   );
 
   // Register a command for Status Bar Item: For displaying the OtterDr error analysis on a separate tab & For highlighting & selecting text in code, sending error to backend and receiving response
@@ -33,11 +32,11 @@ export function activate(context: vscode.ExtensionContext) {
         {
           //Enable Javascript/React in the webview
           enableScripts: true,
-        } // Webview options. More on these later.
+        }, // Webview options. More on these later.
       );
-      
-      const errorSelectionResult = errorSelection(); 
-      if (!errorSelectionResult){
+
+      const errorSelectionResult = errorSelection();
+      if (!errorSelectionResult) {
         console.log("do Nothing");
         return;
       }
@@ -54,25 +53,36 @@ export function activate(context: vscode.ExtensionContext) {
        <meta name="viewport" content="width=device-width, initial-scale=1.0">
      </head>
      <body>
-       <div id="root"> ${aiResponse} </div>
+       <h2>OtterDr says 🦦</h2>
+
+     <h3>What happened:</h3>
+     <p>${aiResponse.whatHappened}</p>
+
+     <h3>Next Steps 👣:</h3>
+     <ol>
+      ${aiResponse.nextSteps.map((step) => `<li>${step}</li>`).join("")}
+     </ol>
+
+     <h3>Otter thoughts 💭:</h3>
+     <p>${aiResponse.otterThoughts}</p>
      </body>
      </html>`;
-    })
+    }),
   );
 
   // Register a command for Status Bar Item: For showing small message window on bottom
   context.subscriptions.push(
     vscode.commands.registerCommand("otterDr.showStatusBarMessage", () => {
       vscode.window.showInformationMessage(
-        `OtterDr is now diving into your code...🤿🪸`
+        `OtterDr is now diving into your code...🤿🪸`,
       );
-    })
+    }),
   );
-  
+
   // Create a new status bar item that we can now manage (Also lets commands above run when clicked) -- Completed!
   const myStatusBarItem = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Right,
-    100
+    100,
   );
   myStatusBarItem.command = "extension.allCommands"; //allows the status bar to execute multiple
   context.subscriptions.push(myStatusBarItem);
@@ -85,7 +95,7 @@ export function activate(context: vscode.ExtensionContext) {
       await vscode.commands.executeCommand("otterDr.showStatusBarMessage");
       await vscode.commands.executeCommand("otterDr.openWebview");
       // Whatever is sent to backend should be in a JSON format
-    })
+    }),
   );
 
   // From errorListening.ts
@@ -101,19 +111,19 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
 
   constructor(private readonly _extensionUri: vscode.Uri) {}
 
-// method to push error data to the webview
-// CHANGE BELOW - only send a message telling otterView that there's an error, no error info
+  // method to push error data to the webview
+  // CHANGE BELOW - only send a message telling otterView that there's an error, no error info
   public sendErrorsToWebview(errors: vscode.Diagnostic[]) {
     if (this._view) {
-     this._view.webview.postMessage({
-        type: 'SET_ERRORS',
+      this._view.webview.postMessage({
+        type: "SET_ERRORS",
         errors: errors, // array of error objects
       });
     }
   }
   public resolveWebviewView(
     webviewView: vscode.WebviewView,
-    _context: vscode.WebviewViewResolveContext
+    _context: vscode.WebviewViewResolveContext,
   ) {
     this._view = webviewView;
 
@@ -129,7 +139,7 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
 
   private _getHtmlForWebview(webview: vscode.Webview) {
     const image = webview.asWebviewUri(
-      vscode.Uri.joinPath(this._extensionUri, "assets", "Default Image.png")
+      vscode.Uri.joinPath(this._extensionUri, "assets", "Default Image.png"),
     );
 
     return `<!DOCTYPE html>
@@ -153,4 +163,4 @@ export function deactivate() {}
 //  webviewView = instance of vscode.WebviewView; represents a custom view you registered
 // webviewView.webview = VERY important for images! The actual webview object inside that container. Can render JS, HTML, CSS, images (with some rules) and behaves like a sandboxed browser
 // webviewView.webview.html --> Is a property (NOT function), when you assign string to it VS Code loads it as full HTML doc
-// this._getHtmlForWebview --> The 
+// this._getHtmlForWebview --> The
