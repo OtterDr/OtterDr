@@ -41,11 +41,10 @@ export function activate(context: vscode.ExtensionContext) {
         return;
       }
 
-      //import our apikey
-      const apiKey =
-        "apiKey here"; //add apikey here
-      //invoke our aitranslator
-      const aiResponse = await otterTranslation(errorSelectionResult, apiKey);
+    //import our apikey
+    const apiKey = "add Api Key Here"//add apikey here
+    //invoke our aitranslator
+    const aiResponse = await otterTranslation(errorSelectionResult, apiKey);
 
       panel.webview.html = `<!DOCTYPE html>
      <html lang="en">
