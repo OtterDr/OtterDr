@@ -82,8 +82,7 @@ export async function otterTranslation(
     });
     //save the response in a variable
     const rawAiMessage = aiResponse.choices[0]?.message?.content;
-    // const encodedMessage = encode(rawAiMessage)
-    
+
     if (!rawAiMessage) {
       throw new Error("No response content from model");
     }
@@ -91,13 +90,12 @@ export async function otterTranslation(
      let parsed: any;
 
     try {
-      parsed = JSON.parse(
-     rawAiMessage);// turns error into json
+      parsed = JSON.parse(rawAiMessage);// turns error into json
     } catch (jsonErr) {
       console.error("Invalid JSON from model:", rawAiMessage);
       throw new Error("Model returned invalid JSON");
     }
-    // console.log(encodedMessage)
+
     return parsed;
 
   } catch (err) {
@@ -112,4 +110,19 @@ export async function otterTranslation(
       otterThoughts: "This error is drifting 🌊"
     };
   }
+
+  //   // handle  the response if you receive a valid one or an invalid one
+  //   if (!aiMessage || aiMessage.trim().length === 0) {
+  //     // checks if the message is invalid
+  //     return "🦦 Otter try again, this one is out of my depth. 🌊"; //Throw message to show valid aiMessage wasn't recieved
+  //   }
+  //   return JSON.parse(aiMessage);
+
+  //   // Original attempt with ternary:
+  //   // aiResponse.choices[0].message.content ? aiResponse.choices[0].message.content : "🦦 Otter try again, this one is out of my depth.🌊"
+  // } catch (err) {
+  //   console.error("Error Occurred with Translation:", err);
+
+  //   return `🦦 Otter can't sea a translation to that error. Please check your API key or network connection and dive back in.`;
+  // }
 }
