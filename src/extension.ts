@@ -1,15 +1,15 @@
-import { join } from 'path';
-import * as vscode from 'vscode';
-import { ExtensionContext, ExtensionMode, Uri, Webview } from 'vscode';
-import { MessageHandlerData } from '@estruyf/vscode';
-import { readFileSync } from 'fs';
-import { errorListener, errorSelection } from './errorListening';
-import { otterTranslation } from './aiTranslator';
-import { encode } from 'html-entities';
-import { getApiKey, setApiKey, deleteApiKey } from './auth';
+import { join } from "path";
+import * as vscode from "vscode";
+import { ExtensionContext, ExtensionMode, Uri, Webview } from "vscode";
+import { MessageHandlerData } from "@estruyf/vscode";
+import { readFileSync } from "fs";
+import { errorListener, errorSelection } from "./errorListening";
+import { otterTranslation } from "./aiTranslator";
+import { encode } from "html-entities";
+import { getApiKey, setApiKey, deleteApiKey } from "./auth";
 
 export function activate(context: vscode.ExtensionContext) {
-  console.log('🔴 OtterDr ACTIVATING!');
+  console.log("🔴 OtterDr ACTIVATING!");
 
   // !!OtterViewProvider class is created later, outside of the activate function!!
   // Creates a new Instance of the otterview
@@ -32,17 +32,17 @@ export function activate(context: vscode.ExtensionContext) {
 
   // Register a command for Status Bar Item: For displaying the OtterDr error analysis on a separate tab & For highlighting & selecting text in code, sending error to backend and receiving response
   context.subscriptions.push(
-    vscode.commands.registerCommand('otterDr.openWebview', async () => {
+    vscode.commands.registerCommand("otterDr.openWebview", async () => {
       const errorSelectionResult = errorSelection();
       if (!errorSelectionResult) {
-        console.log('No error was selected');
+        console.log("No error was selected");
         return;
       }
 
       //import our apikey
       const apiKey = await getApiKey(context);
       if (!apiKey) {
-        vscode.window.showErrorMessage('API key required');
+        vscode.window.showErrorMessage("API key required");
         return;
       }
 
@@ -65,8 +65,8 @@ export function activate(context: vscode.ExtensionContext) {
 
           // Create and show a new webview only after getting the ai response
           const panel = vscode.window.createWebviewPanel(
-            'webview-id', // Identifies the type of the webview. Used internally
-            'OtterDr Diagnosis 🦦', // Title of the panel displayed to the user
+            "webview-id", // Identifies the type of the webview. Used internally
+            "OtterDr Diagnosis 🦦", // Title of the panel displayed to the user
             vscode.ViewColumn.Two, // Editor column to show the new webview panel in. (Opens it on the side as a split editor 'tab'!)
             {
               enableScripts: true, //Enable Javascript/React in the webview
@@ -88,7 +88,7 @@ export function activate(context: vscode.ExtensionContext) {
 
      <h3>Next Steps 👣:</h3>
      <ol>
-      ${aiResponse.nextSteps.map((step) => `<li>${encode(step)}</li>`).join('')}
+      ${aiResponse.nextSteps.map((step) => `<li>${encode(step)}</li>`).join("")}
      </ol>
 
      <h3>Otter thoughts 💭:</h3>
@@ -105,15 +105,15 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.StatusBarAlignment.Right,
     100
   );
-  myStatusBarItem.command = 'extension.allCommands'; //allows the status bar to execute multiple
+  myStatusBarItem.command = "extension.allCommands"; //allows the status bar to execute multiple
   context.subscriptions.push(myStatusBarItem);
-  myStatusBarItem.text = '🦦 OtterDr';
+  myStatusBarItem.text = "🦦 OtterDr";
   myStatusBarItem.show();
 
   // A command for simultaneously running multiple commands!
   context.subscriptions.push(
-    vscode.commands.registerCommand('extension.allCommands', async () => {
-      await vscode.commands.executeCommand('otterDr.openWebview');
+    vscode.commands.registerCommand("extension.allCommands", async () => {
+      await vscode.commands.executeCommand("otterDr.openWebview");
       // Whatever is sent to backend should be in a JSON format
     })
   );
@@ -121,23 +121,23 @@ export function activate(context: vscode.ExtensionContext) {
   // command to listen for changes to the api key so ai doesn't use old one if changed
   context.subscriptions.push(
     context.secrets.onDidChange(async (event) => {
-      if (event.key === 'openai.apiKey') {
+      if (event.key === "openai.apiKey") {
         vscode.window.showInformationMessage(
-          'OtterDr: API Key update detected',
+          "OtterDr: API Key update detected"
         );
       }
     })
   );
   // command to set a new API key
   context.subscriptions.push(
-    vscode.commands.registerCommand('otterDr.setApiKey', async () => {
+    vscode.commands.registerCommand("otterDr.setApiKey", async () => {
       await setApiKey(context);
     })
   );
 
   // command to delete API key
   context.subscriptions.push(
-    vscode.commands.registerCommand('otterDr.deleteApiKey', async () => {
+    vscode.commands.registerCommand("otterDr.deleteApiKey", async () => {
       await deleteApiKey(context);
     })
   );
@@ -146,7 +146,7 @@ export function activate(context: vscode.ExtensionContext) {
 //CLASS
 //Creating OtterViewProvider (Displays otter image)
 class OtterViewProvider implements vscode.WebviewViewProvider {
-  public static readonly viewType = 'otterDr.otterView';
+  public static readonly viewType = "otterDr.otterView";
   private _view?: vscode.WebviewView;
 
   constructor(private readonly _extensionUri: vscode.Uri) {}
@@ -172,12 +172,12 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
   public sendErrorCountToWebview(count: number) {
     if (this._view) {
       this._view.webview.postMessage({
-        type: 'UPDATE_ERROR_COUNT',
+        type: "UPDATE_ERROR_COUNT",
         count: count,
       });
     }
-    console.log('Sending error count:', count);
-    console.log('View exists?', !!this._view);
+    console.log("Sending error count:", count);
+    console.log("View exists?", !!this._view);
   }
   private _getHtmlForWebview(webview: vscode.Webview) {
     const defaultImage = webview.asWebviewUri(
@@ -191,14 +191,15 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
     const confusedImage = webview.asWebviewUri(
       vscode.Uri.joinPath(this._extensionUri, "assets", "confused_image.png")
     );
-    return `<!DOCTYPE html>
+    return /*html*/ `
+    <!DOCTYPE html>
      <html lang="en">
      <head>
        <meta charset="UTF-8">
        <meta name="viewport" content="width=device-width, initial-scale=1.0">
        <style>
           img {
-           height: auto;
+            height: auto;
             cursor: pointer;
           }
         </style>
@@ -207,39 +208,41 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
        <div id="root"></div>
        <img id="otter" src="${defaultImage}" alt="Otter image">
        <script>
-       const img = document.getElementById("otter")
-       const defaultSrc = "${defaultImage}";
-       const happySrc = "${happyImage}"
+          let currentState = 'default';
+          const img = document.getElementById("otter")
+          const defaultSrc = "${defaultImage}";
+          const happySrc = "${happyImage}";
+          const confusedSrc = "${confusedImage}";
 
-       img.addEventListener("click", () => {
-       //change to happy image
-       img.src= happySrc;
-
-       //after 2 seconds go back to default
-       setTimeout(() => {
-       img.src = defaultSrc }, 2000)
-       })
-       </script>
-       <img id="otter-img" src ="${image}" alt= "Otter image">
-
-       <script>
-       const vscode = acquireVsCodeApi();
-       const imgElement = document.getElementById('otter-img');
-
-       window.addEventListener('message', event => {
-       const message = event.data;
-       if (message.type === 'UPDATE_ERROR_COUNT') {
-       const count = message.count;
-
-       console.log("Otter do something about these errors - you have: ", count);
-       // DO THINGS HERE TO CHANGE IMAGE BASED ON ERRORS
+          img.addEventListener("click", () => {
+          //change to happy image
+          img.src= happySrc;
+          //after 2 seconds go back to confused or default
+          setTimeout(() => { img.src = currentState === 'confused' ? confusedSrc : defaultSrc}, 2000)});
        
-       }
-       });
-       </script>
+          //katy's code
+          <!-- <img id="otter-img" src ="${defaultImage}" alt= "Otter image"> -->
+          const vscode = acquireVsCodeApi();
+          <!-- const imgElement = document.getElementById('otter-img'); -->
 
+          window.addEventListener('message', event => {
+          const message = event.data;
+          if (message.type === 'UPDATE_ERROR_COUNT') {
+          const count = message.count;
+          console.log("Otter do something about these errors - you have: ", count);
+          // DO THINGS HERE TO CHANGE IMAGE BASED ON ERRORS
+          if (count > 0) {
+              currentState = 'confused';
+              img.src = confusedSrc;    //show error/confused image
+            } else {
+              currentState = 'default';
+              img.src = defaultSrc;
+            }
+          }
+          });
+        </script>
      </body>
-     </html>`;
+     </html> `;
   }
 }
 
