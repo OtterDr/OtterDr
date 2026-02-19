@@ -5,6 +5,7 @@ import { MessageHandlerData } from "@estruyf/vscode";
 import { readFileSync } from "fs";
 import { errorListener, errorSelection } from "./errorListening";
 import { otterTranslation } from "./aiTranslator";
+import { getApiKey, setApiKey, deleteApiKey } from "./auth";
 
 export function activate(context: vscode.ExtensionContext) {
   console.log("🔴 OtterDr ACTIVATING!");
@@ -35,14 +36,20 @@ export function activate(context: vscode.ExtensionContext) {
         }, // Webview options. More on these later.
       );
 
+      
       const errorSelectionResult = errorSelection();
       if (!errorSelectionResult) {
-        console.log("do Nothing");
+        console.log("No error was selected");
         return;
       }
-
-    //import our apikey
-    const apiKey = "add Api Key Here"//add apikey here
+      
+      //import our apikey
+          const apiKey = await getApiKey(context);
+          if (!apiKey) {
+            vscode.window.showErrorMessage('API key required');
+            return;
+          }
+   
     //invoke our aitranslator
     const aiResponse = await otterTranslation(errorSelectionResult, apiKey);
 
@@ -101,7 +108,30 @@ export function activate(context: vscode.ExtensionContext) {
   // From errorListening.ts
   let disposable = errorListener();
   context.subscriptions.push(disposable);
+
+  // command to listen for changes to the api key so ai doesn't use old one if changed
+  context.subscriptions.push(
+    context.secrets.onDidChange(async (event) => {
+      if (event.key === "openai.apiKey") {
+        vscode.window.showInformationMessage("OtterDr: API Key update detected");
+      }
+    })
+  )
+  // command to set a new API key
+  context.subscriptions.push(
+    vscode.commands.registerCommand("otterDr.setApiKey", async () => {
+      await setApiKey(context);
+    })
+  );
+  
+  // command to delete API key
+  context.subscriptions.push(
+    vscode.commands.registerCommand("otterDr.deleteApiKey", async () => {
+      await deleteApiKey(context);
+    })
+  );
 }
+
 
 //CLASS
 //Creating OtterViewProvider (Displays otter image)

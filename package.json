@@ -32,6 +32,14 @@
       {
         "command": "otterDr.openWebview",
         "title": "Explorer: open OtterDr view"
+      },
+      {
+        "command": "otterDr.setApiKey",
+        "title": "OtterDr: Update API Key"
+      },
+      {
+        "command": "otterDr.deleteApiKey",
+        "title": "OtterDr: Delete API Key"
       }
     ]
   },
