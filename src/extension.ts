@@ -5,7 +5,7 @@ import { MessageHandlerData } from "@estruyf/vscode";
 import { readFileSync } from "fs";
 import { errorListener, errorSelection } from "./errorListening";
 import { otterTranslation } from "./aiTranslator";
-import {encode} from 'html-entities'
+import { encode } from "html-entities";
 import { getApiKey, setApiKey, deleteApiKey } from "./auth";
 
 export function activate(context: vscode.ExtensionContext) {
@@ -19,8 +19,8 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider(
       OtterViewProvider.viewType,
-      provider,
-    ),
+      provider
+    )
   );
 
   // Register a command for Status Bar Item: For displaying the OtterDr error analysis on a separate tab & For highlighting & selecting text in code, sending error to backend and receiving response
@@ -34,26 +34,28 @@ export function activate(context: vscode.ExtensionContext) {
         {
           //Enable Javascript/React in the webview
           enableScripts: true,
-        }, // Webview options. More on these later.
+        } // Webview options. More on these later.
       );
 
-      
       const errorSelectionResult = errorSelection();
       if (!errorSelectionResult) {
         console.log("No error was selected");
         return;
       }
-      
+
       //import our apikey
-          const apiKey = await getApiKey(context);
-          if (!apiKey) {
-            vscode.window.showErrorMessage('API key required');
-            return;
-          }
-   
-    //invoke our aitranslator
-    const aiResponse = await otterTranslation(errorSelectionResult, apiKey);
-     console.log(encode(aiResponse.whatHappened), `it me I'm ecoded!!!!!!! SEe me?`)
+      const apiKey = await getApiKey(context);
+      if (!apiKey) {
+        vscode.window.showErrorMessage("API key required");
+        return;
+      }
+
+      //invoke our aitranslator
+      const aiResponse = await otterTranslation(errorSelectionResult, apiKey);
+      console.log(
+        encode(aiResponse.whatHappened),
+        `it me I'm ecoded!!!!!!! SEe me?`
+      );
       panel.webview.html = `<!DOCTYPE html>
      <html lang="en">
      <head>
@@ -75,22 +77,22 @@ export function activate(context: vscode.ExtensionContext) {
      <p>${encode(aiResponse.otterThoughts)}</p>
      </body>
      </html>`;
-    }),
+    })
   );
 
   // Register a command for Status Bar Item: For showing small message window on bottom
   context.subscriptions.push(
     vscode.commands.registerCommand("otterDr.showStatusBarMessage", () => {
       vscode.window.showInformationMessage(
-        `OtterDr is now diving into your code...🤿🪸`,
+        `OtterDr is now diving into your code...🤿🪸`
       );
-    }),
+    })
   );
 
   // Create a new status bar item that we can now manage (Also lets commands above run when clicked) -- Completed!
   const myStatusBarItem = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Right,
-    100,
+    100
   );
   myStatusBarItem.command = "extension.allCommands"; //allows the status bar to execute multiple
   context.subscriptions.push(myStatusBarItem);
@@ -103,7 +105,7 @@ export function activate(context: vscode.ExtensionContext) {
       await vscode.commands.executeCommand("otterDr.showStatusBarMessage");
       await vscode.commands.executeCommand("otterDr.openWebview");
       // Whatever is sent to backend should be in a JSON format
-    }),
+    })
   );
 
   // From errorListening.ts
@@ -114,17 +116,19 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     context.secrets.onDidChange(async (event) => {
       if (event.key === "openai.apiKey") {
-        vscode.window.showInformationMessage("OtterDr: API Key update detected");
+        vscode.window.showInformationMessage(
+          "OtterDr: API Key update detected"
+        );
       }
     })
-  )
+  );
   // command to set a new API key
   context.subscriptions.push(
     vscode.commands.registerCommand("otterDr.setApiKey", async () => {
       await setApiKey(context);
     })
   );
-  
+
   // command to delete API key
   context.subscriptions.push(
     vscode.commands.registerCommand("otterDr.deleteApiKey", async () => {
@@ -132,7 +136,6 @@ export function activate(context: vscode.ExtensionContext) {
     })
   );
 }
-
 
 //CLASS
 //Creating OtterViewProvider (Displays otter image)
@@ -154,7 +157,7 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
   }
   public resolveWebviewView(
     webviewView: vscode.WebviewView,
-    _context: vscode.WebviewViewResolveContext,
+    _context: vscode.WebviewViewResolveContext
   ) {
     this._view = webviewView;
 
@@ -169,24 +172,21 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
   }
 
   private _getHtmlForWebview(webview: vscode.Webview) {
+    //For React utilization
+    //  const bundleUri = webview.asWebviewUri(
+    //    vscode.Uri.joinPath(
+    //      this._extensionUri,
+    //      "dist",
+    //      "webview",
+    //      "main.bundle.js"
+    //    )
+    //  );
 
+    const imageUri = webview.asWebviewUri(
+      vscode.Uri.joinPath(this._extensionUri, "assets", "default_image.png")
+    );
 
-   const bundleUri = webview.asWebviewUri(
-     vscode.Uri.joinPath(
-       this._extensionUri,
-       "dist",
-       "webview",
-       "main.bundle.js"
-     )
-   );
-
-
-   // const imageUri = webview.asWebviewUri(
-   //   vscode.Uri.joinPath(this._extensionUri, "assets", "default_image.png")
-   // );
-
-
-   return `<!DOCTYPE html>
+    return `<!DOCTYPE html>
     <html lang="en">
     <head>
       <meta charset="UTF-8">
@@ -194,21 +194,17 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
     </head>
     <body>
       <div id="root"></div>
-     <script src="${bundleUri}"></script>
+      <img src ="${imageUri}" alt= "Otter image">
     </body>
     </html>`;
- }
+  }
 }
-
 
 // // this method is called when your extension is deactivated
 export function deactivate() {}
-
 
 //  =============== Some Notes =================
 //  webviewView = instance of vscode.WebviewView; represents a custom view you registered
 // webviewView.webview = VERY important for images! The actual webview object inside that container. Can render JS, HTML, CSS, images (with some rules) and behaves like a sandboxed browser
 // webviewView.webview.html --> Is a property (NOT function), when you assign string to it VS Code loads it as full HTML doc
 // this._getHtmlForWebview --> The
-
-
