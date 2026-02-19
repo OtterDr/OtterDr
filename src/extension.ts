@@ -194,5 +194,3 @@ export function deactivate() {}
 // webviewView.webview = VERY important for images! The actual webview object inside that container. Can render JS, HTML, CSS, images (with some rules) and behaves like a sandboxed browser
 // webviewView.webview.html --> Is a property (NOT function), when you assign string to it VS Code loads it as full HTML doc
 // this._getHtmlForWebview --> The
-
-// git merge --no-ff
