@@ -47,11 +47,14 @@ export function errorSelection() {
   const selection = editor.selection;
   console.log('selection: ', selection)
 
+  const selectionRange = editor.selection; // selection gives a bigger range automatically
+  const cursorPosition = editor.selection.active;// grabs cursor position
+
   const selectedError = diagnostics.find((diagnostic) => {
     return (
       diagnostic.severity === vscode.DiagnosticSeverity.Error &&
-        selection.start.line === diagnostic.range.start.line
-    )
+       ( diagnostic.range.contains(cursorPosition) || diagnostic.range.intersection(selectionRange) !== undefined )
+    );
   });
 
   if(!selectedError)return null;
