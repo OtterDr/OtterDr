@@ -1,17 +1,16 @@
-import { join } from "path";
-import * as vscode from "vscode";
-import { ExtensionContext, ExtensionMode, Uri, Webview } from "vscode";
-import { MessageHandlerData } from "@estruyf/vscode";
-import { readFileSync } from "fs";
-import { errorListener, errorSelection } from "./errorListening";
-import { otterTranslation } from "./aiTranslator";
-import { encode } from "html-entities";
-import { getApiKey, setApiKey, deleteApiKey } from "./auth";
+import { join } from 'path';
+import * as vscode from 'vscode';
+import { ExtensionContext, ExtensionMode, Uri, Webview } from 'vscode';
+import { MessageHandlerData } from '@estruyf/vscode';
+import { readFileSync } from 'fs';
+import { errorListener, errorSelection } from './errorListening';
+import { otterTranslation } from './aiTranslator';
+import { encode } from 'html-entities';
+import { getApiKey, setApiKey, deleteApiKey } from './auth';
 
 export function activate(context: vscode.ExtensionContext) {
-  console.log("🔴 OtterDr ACTIVATING!");
+  console.log('🔴 OtterDr ACTIVATING!');
 
-  
   // !!OtterViewProvider class is created later, outside of the activate function!!
   // Creates a new Instance of the otterview
   const provider = new OtterViewProvider(context.extensionUri);
@@ -24,9 +23,16 @@ export function activate(context: vscode.ExtensionContext) {
     ),
   );
 
+  // Initialize error listener for OtterViewProvider
+  const errorCount = errorListener((count) => {
+    provider.sendErrorCountToWebview(count);
+  });
+
+  context.subscriptions.push(errorCount);
+
   // Register a command for Status Bar Item: For displaying the OtterDr error analysis on a separate tab & For highlighting & selecting text in code, sending error to backend and receiving response
   context.subscriptions.push(
-    vscode.commands.registerCommand("otterDr.openWebview", async () => {
+    vscode.commands.registerCommand('otterDr.openWebview', async () => {
       const errorSelectionResult = errorSelection();
       if (!errorSelectionResult) {
         console.log('No error was selected');
@@ -36,28 +42,31 @@ export function activate(context: vscode.ExtensionContext) {
       //import our apikey
       const apiKey = await getApiKey(context);
       if (!apiKey) {
-        vscode.window.showErrorMessage("API key required");
+        vscode.window.showErrorMessage('API key required');
         return;
       }
 
       //create progress view window
-      vscode.window.withProgress(//withProgress gives the loading bar
+      vscode.window.withProgress(
+        //withProgress gives the loading bar
         {
           location: vscode.ProgressLocation.Notification,
           title: `OtterDr is now diving into your code...🤿🪸`,
           cancellable: false,
         },
 
-        async () => {// waiting for the response from ai
-          const aiResponse = await otterTranslation( //invoke our aitranslator
+        async () => {
+          // waiting for the response from ai
+          const aiResponse = await otterTranslation(
+            //invoke our aitranslator
             errorSelectionResult,
             apiKey,
-          ); 
+          );
 
           // Create and show a new webview only after getting the ai response
           const panel = vscode.window.createWebviewPanel(
-            "webview-id", // Identifies the type of the webview. Used internally
-            "OtterDr Diagnosis 🦦", // Title of the panel displayed to the user
+            'webview-id', // Identifies the type of the webview. Used internally
+            'OtterDr Diagnosis 🦦', // Title of the panel displayed to the user
             vscode.ViewColumn.Two, // Editor column to show the new webview panel in. (Opens it on the side as a split editor 'tab'!)
             {
               enableScripts: true, //Enable Javascript/React in the webview
@@ -91,7 +100,6 @@ export function activate(context: vscode.ExtensionContext) {
     }),
   );
 
-
   // Create a new status bar item that we can now manage (Also lets commands above run when clicked) -- Completed!
   const myStatusBarItem = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Right,
@@ -104,22 +112,18 @@ export function activate(context: vscode.ExtensionContext) {
 
   // A command for simultaneously running multiple commands!
   context.subscriptions.push(
-    vscode.commands.registerCommand("extension.allCommands", async () => {
-      await vscode.commands.executeCommand("otterDr.openWebview");
+    vscode.commands.registerCommand('extension.allCommands', async () => {
+      await vscode.commands.executeCommand('otterDr.openWebview');
       // Whatever is sent to backend should be in a JSON format
     }),
   );
 
-  // From errorListening.ts
-  let disposable = errorListener();
-  context.subscriptions.push(disposable);
-
   // command to listen for changes to the api key so ai doesn't use old one if changed
   context.subscriptions.push(
     context.secrets.onDidChange(async (event) => {
-      if (event.key === "openai.apiKey") {
+      if (event.key === 'openai.apiKey') {
         vscode.window.showInformationMessage(
-          "OtterDr: API Key update detected",
+          'OtterDr: API Key update detected',
         );
       }
     }),
@@ -152,26 +156,28 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
     _context: vscode.WebviewViewResolveContext,
   ) {
     this._view = webviewView;
-    
+
     webviewView.webview.options = {
       // Allow scripts in the webview
       enableScripts: true,
       // Restricts webview to loading content only from our extension ("localResourceRoots defines a set of root URIs from which local content may be loaded" - https://code.visualstudio.com/api/extension-guides/webview#controlling-access-to-local-resources)
       localResourceRoots: [this._extensionUri],
     };
-    
+
     webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
   }
-  
+
   // method to push error data to the webview
   // CHANGE BELOW - only send a message telling otterView that there's an error, no error info
-  public sendErrorsToWebview(numOfErrors: number) {
+  public sendErrorCountToWebview(count: number) {
     if (this._view) {
       this._view.webview.postMessage({
-        type: 'SET_ERRORS',
-        errors: numOfErrors, // number of errors in current diagnostic array
+        type: 'UPDATE_ERROR_COUNT',
+        count: count,
       });
     }
+    console.log('Sending error count:', count);
+    console.log('View exists?', !!this._view);
   }
   private _getHtmlForWebview(webview: vscode.Webview) {
     const image = webview.asWebviewUri(
@@ -186,16 +192,24 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
      </head>
      <body>
        <div id="root"></div>
-       <img src ="${image}" alt= "Otter image">
+       <img id="otter-img" src ="${image}" alt= "Otter image">
+
        <script>
        const vscode = acquireVsCodeApi();
+       const imgElement = document.getElementById('otter-img');
+
        window.addEventListener('message', event => {
        const message = event.data;
-       if (message.type === 'SET_ERRORS') {
-       console.log('Error count in webview: ', message.numOfErrors);
+       if (message.type === 'UPDATE_ERROR_COUNT') {
+       const count = message.count;
+
+       console.log("Otter do something about these errors - you have: ", count);
+       // DO THINGS HERE TO CHANGE IMAGE BASED ON ERRORS
+       
        }
        });
-       <script>
+       </script>
+
      </body>
      </html>`;
   }
