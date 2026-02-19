@@ -9,7 +9,7 @@ export async function getApiKey(
   // if key isn't found, prompt user to input key
   if (!apiKey) apiKey = await promptAndStoreApiKey(context);
   return apiKey;
-};
+}
 
 // function to prompt user to input API key and store in vscode secretStorage
 export async function promptAndStoreApiKey(context: vscode.ExtensionContext) {
@@ -24,15 +24,20 @@ export async function promptAndStoreApiKey(context: vscode.ExtensionContext) {
     },
   });
   if (key) {
-    await context.secrets.store("openai.apiKey", key.trim());
-    vscode.window.showInformationMessage("API key saved securely");
+    await context.secrets.store('openai.apiKey', key.trim());
+    vscode.window.showInformationMessage('API key saved securely');
     return key.trim();
   }
   return undefined;
-};
+}
+
+// function to allow user to update API key
+export async function setApiKey(context: vscode.ExtensionContext) {
+    await promptAndStoreApiKey(context);
+}
 
 // function to allow user to delete API key
-export async function deleteHandler(context: vscode.ExtensionContext) {
-    await context.secrets.delete("openai.apiKey");
-    vscode.window.showInformationMessage("API key deleted");
-};
+export async function deleteApiKey(context: vscode.ExtensionContext) {
+  await context.secrets.delete('openai.apiKey');
+  vscode.window.showInformationMessage('API key deleted');
+}

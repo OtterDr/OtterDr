@@ -70,7 +70,7 @@ export function errorSelection() {
     console.log('selected text: ', selectedText);
     // return selectedText;
   }
-   console.log('what is here?');
+   
   if (!selectedError){ return null}; // if there's no error, don't do anything
   const startLine = selectedError.range.start.line; // grab start line
   const endLine = selectedError.range.end.line; // grab endline
