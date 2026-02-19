@@ -26,10 +26,11 @@ export function errorListener() {
       const errors = diagnostics.filter(
         (diagObj) => diagObj.severity === vscode.DiagnosticSeverity.Error,
       );
-    }
+      const numOfErrors = errors.length;
+      return numOfErrors; // send number of errors to explorer webview
+    } 
   });
-  // if (errors.length > 0) { return update otteremotes}
-}
+ }
 
 // 2. errorSelection - listen for highlighted stuff, bundle pertinent info, make ai fetch request
 export function errorSelection() {
