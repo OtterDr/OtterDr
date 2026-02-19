@@ -5,14 +5,15 @@ import { MessageHandlerData } from "@estruyf/vscode";
 import { readFileSync } from "fs";
 import { errorListener, errorSelection } from "./errorListening";
 import { otterTranslation } from "./aiTranslator";
-import {encode} from 'html-entities'
+import { encode } from "html-entities";
 import { getApiKey, setApiKey, deleteApiKey } from "./auth";
 
 export function activate(context: vscode.ExtensionContext) {
   console.log("🔴 OtterDr ACTIVATING!");
 
-  // Creates a new Instance of the otterview
+  
   // !!OtterViewProvider class is created later, outside of the activate function!!
+  // Creates a new Instance of the otterview
   const provider = new OtterViewProvider(context.extensionUri);
 
   // For displaying the otter image on explorer
@@ -26,35 +27,45 @@ export function activate(context: vscode.ExtensionContext) {
   // Register a command for Status Bar Item: For displaying the OtterDr error analysis on a separate tab & For highlighting & selecting text in code, sending error to backend and receiving response
   context.subscriptions.push(
     vscode.commands.registerCommand("otterDr.openWebview", async () => {
-      // Create and show a new webview
-      const panel = vscode.window.createWebviewPanel(
-        "webview-id", // Identifies the type of the webview. Used internally
-        "OtterDr Diagnosis 🦦", // Title of the panel displayed to the user
-        vscode.ViewColumn.Two, // Editor column to show the new webview panel in. (Opens it on the side as a split editor 'tab'!)
-        {
-          //Enable Javascript/React in the webview
-          enableScripts: true,
-        }, // Webview options. More on these later.
-      );
-
-      
       const errorSelectionResult = errorSelection();
       if (!errorSelectionResult) {
         console.log("No error was selected");
         return;
       }
-      
+
       //import our apikey
-          const apiKey = await getApiKey(context);
-          if (!apiKey) {
-            vscode.window.showErrorMessage('API key required');
-            return;
-          }
-   
-    //invoke our aitranslator
-    const aiResponse = await otterTranslation(errorSelectionResult, apiKey);
-     console.log(encode(aiResponse.whatHappened), `it me I'm ecoded!!!!!!! SEe me?`)
-      panel.webview.html = `<!DOCTYPE html>
+      const apiKey = await getApiKey(context);
+      if (!apiKey) {
+        vscode.window.showErrorMessage("API key required");
+        return;
+      }
+
+      //create progress view window
+      vscode.window.withProgress(//withProgress gives the loading bar
+        {
+          location: vscode.ProgressLocation.Notification,
+          title: `OtterDr is now diving into your code...🤿🪸`,
+          cancellable: false,
+        },
+
+        async () => {// waiting for the response from ai
+          const aiResponse = await otterTranslation( //invoke our aitranslator
+            errorSelectionResult,
+            apiKey,
+          ); 
+
+          // Create and show a new webview only after getting the ai response
+          const panel = vscode.window.createWebviewPanel(
+            "webview-id", // Identifies the type of the webview. Used internally
+            "OtterDr Diagnosis 🦦", // Title of the panel displayed to the user
+            vscode.ViewColumn.Two, // Editor column to show the new webview panel in. (Opens it on the side as a split editor 'tab'!)
+            {
+              enableScripts: true, //Enable Javascript/React in the webview
+            },
+          );
+          // Webview options. More on these later.
+
+          panel.webview.html = `<!DOCTYPE html>
      <html lang="en">
      <head>
        <meta charset="UTF-8">
@@ -75,17 +86,11 @@ export function activate(context: vscode.ExtensionContext) {
      <p>${encode(aiResponse.otterThoughts)}</p>
      </body>
      </html>`;
-    }),
-  );
-
-  // Register a command for Status Bar Item: For showing small message window on bottom
-  context.subscriptions.push(
-    vscode.commands.registerCommand("otterDr.showStatusBarMessage", () => {
-      vscode.window.showInformationMessage(
-        `OtterDr is now diving into your code...🤿🪸`,
+        },
       );
     }),
   );
+
 
   // Create a new status bar item that we can now manage (Also lets commands above run when clicked) -- Completed!
   const myStatusBarItem = vscode.window.createStatusBarItem(
@@ -100,7 +105,6 @@ export function activate(context: vscode.ExtensionContext) {
   // A command for simultaneously running multiple commands!
   context.subscriptions.push(
     vscode.commands.registerCommand("extension.allCommands", async () => {
-      await vscode.commands.executeCommand("otterDr.showStatusBarMessage");
       await vscode.commands.executeCommand("otterDr.openWebview");
       // Whatever is sent to backend should be in a JSON format
     }),
@@ -114,25 +118,26 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     context.secrets.onDidChange(async (event) => {
       if (event.key === "openai.apiKey") {
-        vscode.window.showInformationMessage("OtterDr: API Key update detected");
+        vscode.window.showInformationMessage(
+          "OtterDr: API Key update detected",
+        );
       }
-    })
-  )
+    }),
+  );
   // command to set a new API key
   context.subscriptions.push(
     vscode.commands.registerCommand("otterDr.setApiKey", async () => {
       await setApiKey(context);
-    })
+    }),
   );
-  
+
   // command to delete API key
   context.subscriptions.push(
     vscode.commands.registerCommand("otterDr.deleteApiKey", async () => {
       await deleteApiKey(context);
-    })
+    }),
   );
 }
-
 
 //CLASS
 //Creating OtterViewProvider (Displays otter image)
