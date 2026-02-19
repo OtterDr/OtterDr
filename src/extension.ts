@@ -169,29 +169,46 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
   }
 
   private _getHtmlForWebview(webview: vscode.Webview) {
-    const image = webview.asWebviewUri(
-      vscode.Uri.joinPath(this._extensionUri, "assets", "Default Image.png"),
-    );
 
-    return `<!DOCTYPE html>
-     <html lang="en">
-     <head>
-       <meta charset="UTF-8">
-       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-     </head>
-     <body>
-       <div id="root"></div>
-       <img src ="${image}" alt= "Otter image">
-     </body>
-     </html>`;
-  }
+
+   const bundleUri = webview.asWebviewUri(
+     vscode.Uri.joinPath(
+       this._extensionUri,
+       "dist",
+       "webview",
+       "main.bundle.js"
+     )
+   );
+
+
+   // const imageUri = webview.asWebviewUri(
+   //   vscode.Uri.joinPath(this._extensionUri, "assets", "default_image.png")
+   // );
+
+
+   return `<!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body>
+      <div id="root"></div>
+     <script src="${bundleUri}"></script>
+    </body>
+    </html>`;
+ }
 }
+
 
 // // this method is called when your extension is deactivated
 export function deactivate() {}
+
 
 //  =============== Some Notes =================
 //  webviewView = instance of vscode.WebviewView; represents a custom view you registered
 // webviewView.webview = VERY important for images! The actual webview object inside that container. Can render JS, HTML, CSS, images (with some rules) and behaves like a sandboxed browser
 // webviewView.webview.html --> Is a property (NOT function), when you assign string to it VS Code loads it as full HTML doc
 // this._getHtmlForWebview --> The
+
+
