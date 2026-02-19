@@ -11,7 +11,6 @@ import { getApiKey, setApiKey, deleteApiKey } from "./auth";
 export function activate(context: vscode.ExtensionContext) {
   console.log("🔴 OtterDr ACTIVATING!");
 
-  
   // !!OtterViewProvider class is created later, outside of the activate function!!
   // Creates a new Instance of the otterview
   const provider = new OtterViewProvider(context.extensionUri);
@@ -20,8 +19,8 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider(
       OtterViewProvider.viewType,
-      provider,
-    ),
+      provider
+    )
   );
 
   // Register a command for Status Bar Item: For displaying the OtterDr error analysis on a separate tab & For highlighting & selecting text in code, sending error to backend and receiving response
@@ -41,18 +40,21 @@ export function activate(context: vscode.ExtensionContext) {
       }
 
       //create progress view window
-      vscode.window.withProgress(//withProgress gives the loading bar
+      vscode.window.withProgress(
+        //withProgress gives the loading bar
         {
           location: vscode.ProgressLocation.Notification,
           title: `OtterDr is now diving into your code...🤿🪸`,
           cancellable: false,
         },
 
-        async () => {// waiting for the response from ai
-          const aiResponse = await otterTranslation( //invoke our aitranslator
+        async () => {
+          // waiting for the response from ai
+          const aiResponse = await otterTranslation(
+            //invoke our aitranslator
             errorSelectionResult,
-            apiKey,
-          ); 
+            apiKey
+          );
 
           // Create and show a new webview only after getting the ai response
           const panel = vscode.window.createWebviewPanel(
@@ -61,7 +63,7 @@ export function activate(context: vscode.ExtensionContext) {
             vscode.ViewColumn.Two, // Editor column to show the new webview panel in. (Opens it on the side as a split editor 'tab'!)
             {
               enableScripts: true, //Enable Javascript/React in the webview
-            },
+            }
           );
           // Webview options. More on these later.
 
@@ -86,16 +88,15 @@ export function activate(context: vscode.ExtensionContext) {
      <p>${encode(aiResponse.otterThoughts)}</p>
      </body>
      </html>`;
-        },
+        }
       );
-    }),
+    })
   );
-
 
   // Create a new status bar item that we can now manage (Also lets commands above run when clicked) -- Completed!
   const myStatusBarItem = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Right,
-    100,
+    100
   );
   myStatusBarItem.command = "extension.allCommands"; //allows the status bar to execute multiple
   context.subscriptions.push(myStatusBarItem);
@@ -107,7 +108,7 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand("extension.allCommands", async () => {
       await vscode.commands.executeCommand("otterDr.openWebview");
       // Whatever is sent to backend should be in a JSON format
-    }),
+    })
   );
 
   // From errorListening.ts
@@ -119,23 +120,23 @@ export function activate(context: vscode.ExtensionContext) {
     context.secrets.onDidChange(async (event) => {
       if (event.key === "openai.apiKey") {
         vscode.window.showInformationMessage(
-          "OtterDr: API Key update detected",
+          "OtterDr: API Key update detected"
         );
       }
-    }),
+    })
   );
   // command to set a new API key
   context.subscriptions.push(
     vscode.commands.registerCommand("otterDr.setApiKey", async () => {
       await setApiKey(context);
-    }),
+    })
   );
 
   // command to delete API key
   context.subscriptions.push(
     vscode.commands.registerCommand("otterDr.deleteApiKey", async () => {
       await deleteApiKey(context);
-    }),
+    })
   );
 }
 
@@ -159,7 +160,7 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
   }
   public resolveWebviewView(
     webviewView: vscode.WebviewView,
-    _context: vscode.WebviewViewResolveContext,
+    _context: vscode.WebviewViewResolveContext
   ) {
     this._view = webviewView;
 
@@ -174,19 +175,46 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
   }
 
   private _getHtmlForWebview(webview: vscode.Webview) {
-    const image = webview.asWebviewUri(
-      vscode.Uri.joinPath(this._extensionUri, "assets", "Default Image.png"),
+    const defaultImage = webview.asWebviewUri(
+      vscode.Uri.joinPath(this._extensionUri, "assets", "default_image.png")
     );
 
+    const happyImage = webview.asWebviewUri(
+      vscode.Uri.joinPath(this._extensionUri, "assets", "happy_image.png")
+    );
+
+    const confusedImage = webview.asWebviewUri(
+      vscode.Uri.joinPath(this._extensionUri, "assets", "confused_image.png")
+    );
     return `<!DOCTYPE html>
      <html lang="en">
      <head>
        <meta charset="UTF-8">
        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+       <style>
+          img {
+           height: auto;
+            cursor: pointer;
+          }
+        </style>
      </head>
      <body>
        <div id="root"></div>
-       <img src ="${image}" alt= "Otter image">
+       <img id="otter" src="${defaultImage}" alt="Otter image">
+       <script>
+       const img = document.getElementById("otter")
+       const defaultSrc = "${defaultImage}";
+       const happySrc = "${happyImage}"
+
+       img.addEventListener("click", () => {
+       //change to happy image
+       img.src= happySrc;
+
+       //after 2 seconds go back to default
+       setTimeout(() => {
+       img.src = defaultSrc }, 2000)
+       })
+       </script>
      </body>
      </html>`;
   }
