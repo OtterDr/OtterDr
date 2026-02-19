@@ -91,6 +91,7 @@
     "webpack-manifest-plugin": "^5.0.0"
   },
   "dependencies": {
+    "html-entities": "^2.6.0",
     "openai": "^6.17.0",
     "vscrui": "^0.3.0"
   }

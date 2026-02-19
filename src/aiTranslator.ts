@@ -1,50 +1,8 @@
 import OpenAI from "openai";
 import { ErrorFormat } from "./errorListening";
-// import "dotenv/config"; or secretssssss
 
-// create typing for  error : string (Might not be but double check) apiKey: string
 
-// use GPT-5 nano (to get full list of available models: const allModels = await vscode.lm.selectChatModels(MODEL_SELECTOR);)
 
-/* LANGUAGE MODEL API STEPS
-1. Build the language model prompt - provides instructions to llm on broad task, defines context where user messages are interpreted
-    * vscode.LanguageModelChatMessage.User - for providing instructions and the user's request
-    * vscode.LanguageModelChatMessage.Assistant - for adding history of prev llm responses as context to prompt (maybe also examples??)
-    * EXAMPLE:
-    *  const SYSTEM_PROMPT = '<all the text describing role, rules, instructions with examples>'
-       const ERROR_PROMPT = <specific error from webview including any additional surrounding code if necessary>
-    const compiledPrompt = [ vscode.LanguageModelChatMessage.User('<SYSTEM_PROMPT>'), vscode.LanguageModelChatMessage.User('<ERROR_PROMPT>')];
-2. Send the language model request
-    * select llm we want to use with selectChatModels method (returns array of llms matching specified criteria) -> can specify vendor, id, family, or version
-    * send request to llm using sendRequest method, passing in prompt, any additional options, and cancellation token
-    * use LanguageModelError to distinguish between types of errors
-3. Interpret the response - streaming based, so add appropriate error handling
-    * parseResponse function that accumulates all the response fragments into a whole string, looking out for a closing } to be sure the fragment is finished
-*/
-
-// who we want our ai to be and how we want it to return our data
-// Role, Context/Examples, Rules, Task
-
-// response variable is where our async function happens
-
-/*
-TESTING:
-* MOCK: What we receive from webview:
-    * editor object props (language, range (s line, s char, end line, end char), text)
-* MOCK: Diagnostic array with errors that match mock object sent from webview
-* Function to match range in editor object to one of the objects in the diagnostics array
-* Create an "error" variable that includes editor object and matching diagnostic (nested object)
-    * this variable is passed in as the "error" argument in AI call
-
-const error = {
- editor: {
- 
- }, 
- diagnostic: {
- 
- }
-}
-*/
 // add typing for the otter response format
 export interface OtterResponse{
   whatHappened: string;
@@ -85,7 +43,7 @@ export async function otterTranslation(
     - Do NOT invent solutions unrelated to the error.
 
     If the JSON cannot be parsed, respond with:
-"OtterDr couldn’t understand this error yet — please select a valid compiler error 🦦"
+"OtterDr couldn't understand this error yet — please select a valid compiler error 🦦"
     
   OUTPUT FORMAT (follow exactly):
     Return ONLY valid JSON in this exact shape:

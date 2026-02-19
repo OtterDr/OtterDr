@@ -5,6 +5,7 @@ import { MessageHandlerData } from "@estruyf/vscode";
 import { readFileSync } from "fs";
 import { errorListener, errorSelection } from "./errorListening";
 import { otterTranslation } from "./aiTranslator";
+import {encode} from 'html-entities'
 import { getApiKey, setApiKey, deleteApiKey } from "./auth";
 
 export function activate(context: vscode.ExtensionContext) {
@@ -52,7 +53,7 @@ export function activate(context: vscode.ExtensionContext) {
    
     //invoke our aitranslator
     const aiResponse = await otterTranslation(errorSelectionResult, apiKey);
-
+     console.log(encode(aiResponse.whatHappened), `it me I'm ecoded!!!!!!! SEe me?`)
       panel.webview.html = `<!DOCTYPE html>
      <html lang="en">
      <head>
@@ -63,15 +64,15 @@ export function activate(context: vscode.ExtensionContext) {
        <h2>OtterDr says 🦦</h2>
 
      <h3>What happened:</h3>
-     <p>${aiResponse.whatHappened}</p>
+     <p>${encode(aiResponse.whatHappened)}</p>
 
      <h3>Next Steps 👣:</h3>
      <ol>
-      ${aiResponse.nextSteps.map((step) => `<li>${step}</li>`).join("")}
+      ${aiResponse.nextSteps.map((step) => `<li>${encode(step)}</li>`).join("")}
      </ol>
 
      <h3>Otter thoughts 💭:</h3>
-     <p>${aiResponse.otterThoughts}</p>
+     <p>${encode(aiResponse.otterThoughts)}</p>
      </body>
      </html>`;
     }),
