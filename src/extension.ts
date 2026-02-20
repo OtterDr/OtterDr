@@ -8,14 +8,16 @@ import { otterTranslation } from './aiTranslator';
 import { encode } from 'html-entities';
 import { getApiKey, setApiKey, deleteApiKey } from './auth';
 
+let aiInProgress = false;//create a variable to handle if a ai call is in progress
+// let prevErrorKey: string | null = null;//create a variable to hold the key for a cached response(key should be an identifier from diagnostic grabbed)
+let cachedTranslations:Record<string,any>  = {};// create a var to hold the cached translation
 
-/*
-NOTES TO ME:
-*Right now, the first time you open a webview, it opens 2nd column like we want, but then only displays the placeholder text, not the ai text
+function getErrorKey(inputError: string): string{//create a function to handle grabbing the error from our error selector to use as a key
+return inputError;
+}
+ // track current webview panel
+  let currentPanel: vscode.WebviewPanel | undefined = undefined;
 
-*If I try a second error, it moves the existing webview to the primary panel (don't want this), and still only displays the placeholder text
-
-*/
 export function activate(context: vscode.ExtensionContext) {
   console.log('🔴 OtterDr ACTIVATING!');
 
@@ -23,9 +25,36 @@ export function activate(context: vscode.ExtensionContext) {
   // Creates a new Instance of the otterview
   const provider = new OtterViewProvider(context.extensionUri);
 
-  // track current webview panel
-  let currentPanel: vscode.WebviewPanel | undefined = undefined;
+ 
 
+  //function to get current panel or create new one
+  const getOrCreatePanel = () => {
+    if (currentPanel) {
+      // if there's already a panel, show it in the target column
+      currentPanel.reveal(vscode.ViewColumn.Two);
+    } else {
+      // otherwise, create a new panel
+      currentPanel = vscode.window.createWebviewPanel(
+        'webview-id', // Identifies the type of the webview. Used internally
+        'OtterDr Diagnosis 🦦', // Title of the panel displayed to the user
+        vscode.ViewColumn.Two, // Editor column to show the new webview panel in. (Opens it on the side as a split editor 'tab'!)
+        {
+          enableScripts: true, //Enable Javascript/React in the webview
+          localResourceRoots: [context.extensionUri],
+        },
+      );
+      // reset when current panel is closed
+      currentPanel.onDidDispose(
+        () => {
+          currentPanel = undefined;
+        },
+        null,
+        context.subscriptions,
+      );
+    }
+    return currentPanel;
+  };
+  
   // For displaying the otter image on explorer
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider(
@@ -50,6 +79,27 @@ export function activate(context: vscode.ExtensionContext) {
         return;
       }
 
+      const errorKey = getErrorKey(errorSelectionResult);//assign error to be the errorkey for cache obj
+
+       if(cachedTranslations[errorKey]){
+        console.log("Using Cached Translation");
+
+        //check if there is a webview or create new one for cached info
+        const panel = getOrCreatePanel();
+        panel.webview.html = renderHTML(panel.webview, cachedTranslations[errorKey]);
+        return;
+      }
+
+       //after checking cache ai call will actively happen if no cache is found so we handle multiple calls here
+      if(aiInProgress){ //if this is truthy ai is processing the request
+        vscode.window.showInformationMessage(
+          "OtterDr is already fishing for a solution. 🦦"
+        );//udate to the user that ai is processing with mini pop up
+        return;//breaks out of call attempt
+      }
+
+      const panel = getOrCreatePanel();
+     
       //import our apikey
       const apiKey = await getApiKey(context);
       if (!apiKey) {
@@ -58,117 +108,44 @@ export function activate(context: vscode.ExtensionContext) {
       }
 
       //create progress view window
-      vscode.window.withProgress(
-        //withProgress gives the loading bar
+      try{
+        aiInProgress = true;//if it wasn't in progress it is now so update the var to true
+        panel.webview.html = `Hold your breath, OtterDr is taking a deep dive...🤿`;
+       await vscode.window.withProgress(
+       //withProgress gives the loading bar
         {
-          location: vscode.ProgressLocation.Notification,
-          title: `OtterDr is now diving into your code...🤿🪸`,
-          cancellable: false,
-        },
+        location: vscode.ProgressLocation.Notification,
+        title: `OtterDr is now diving into your code...🤿🪸`,
+        cancellable: false,
+      },
 
-        async () => {
-          // waiting for the response from ai
-          const aiResponse = await otterTranslation(
-            //invoke our aitranslator
-            errorSelectionResult,
-            apiKey,
-          );
+      async () => {
+        // waiting for the response from ai
+        const aiResponse = await otterTranslation(
+          //invoke our aitranslator
+          errorSelectionResult,
+          apiKey,
+        );
 
-          // encode ai response
-          const encodedResponse = {
-            whatHappened: encode(aiResponse.whatHappened),
-            nextSteps: aiResponse.nextSteps.map((step) => encode(step)),
-            otterThoughts: encode(aiResponse.otterThoughts),
-          };
+        //after the call cache the results
+        cachedTranslations[errorKey] = aiResponse;
 
-          const columnToShowIn = vscode.window.activeTextEditor
-            ? vscode.window.activeTextEditor.viewColumn
-            : undefined;
+        // Create and show a new webview only after getting the ai response
+        const panel = getOrCreatePanel();
+        panel.webview.html = renderHTML(panel.webview , aiResponse);
+      }
+   );
 
-          if (currentPanel) {
-            // if there's already a panel, show it in the target column
-            currentPanel.reveal(columnToShowIn);
-          } else {
-            // otherwise, create a new panel
-            currentPanel = vscode.window.createWebviewPanel(
-              'webview-id', // Identifies the type of the webview. Used internally
-              'OtterDr Diagnosis 🦦', // Title of the panel displayed to the user
-              vscode.ViewColumn.Two, // Editor column to show the new webview panel in. (Opens it on the side as a split editor 'tab'!)
-              {
-                enableScripts: true, //Enable Javascript/React in the webview
-                localResourceRoots: [context.extensionUri],
-              },
-            );
-          }
-
-          // send response via postMessage -> THIS WON'T WORK UNTIL WE'RE TRACKING THE CURRENT PANEL
-          currentPanel.webview.postMessage({
-            type: 'UPDATE_AI_RESPONSE',
-            data: encodedResponse,
-          });
-
-          const nonce = getNonce();
-          currentPanel.webview.html = `<!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${currentPanel.webview.cspSource} 'unsafe-inline'; img-src ${currentPanel.webview.cspSource} data:; script-src 'nonce-${nonce}';">
-    </head>
-
-    <body>
-      <h2>OtterDr says 🦦</h2>
-
-      <h3>What happened:</h3>
-      <p id="whatHappened">Hold your breath while OtterDr dives in...🤿</p>
-
-      <h3>Next Steps 👣:</h3>
-      <ol id="nextSteps"></ol>
-
-      <h3>Otter thoughts 💭:</h3>
-      <p id="otterThoughts"></p>
-        <script nonce="${nonce}">
-        const vscode = acquireVsCodeApi();
-
-        window.addEventListener('message', event => {
-        const message = event.data;
-        
-        if (message.type === 'UPDATE_AI_RESPONSE") {
-          document.getElementById.("whatHappened").innerText = message.data.whatHappened;
-
-          const listContainer = document.getElementById.("nextSteps");
-          //create document fragments for rendering list items, construct all nodes, then insert into DOM for better performance
-          const fragment = document.createDocumentFragment();
-
-          message.data.nextSteps.forEach(step => {
-          const li = document.createElement('li');
-          li.textContent = step;
-          fragment.appendChild(li);
-          });
-          // clear old content and add new list items
-          listContainer.replaceChildren(fragment);
-
-          document.getElementById("otterThoughts").innerText = message.data.otterThoughts;
-          }
-        })
-        </script>
-     </body>
-     </html>`;
-
-          // reset when current panel is closed
-          currentPanel.onDidDispose(
-            () => {
-              currentPanel = undefined;
-            },
-            null,
-            context.subscriptions,
-          );
-        },
-      );
-    }),
+      } catch (err){
+     console.error("AI failed:", err);
+          vscode.window.showErrorMessage("OtterDr Was Swept away by confusion.");
+        } finally {
+          aiInProgress = false;
+        }
+  })
   );
 
-  // Create a new status bar item that we can now manage (Also lets commands above run when clicked) -- Completed!
+// Create a new status bar item that we can now manage (Also lets commands above run when clicked) -- Completed!
   const myStatusBarItem = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Right,
     100,
@@ -211,6 +188,36 @@ export function activate(context: vscode.ExtensionContext) {
   );
 }
 
+function renderHTML(webview:vscode.Webview, aiResponse: any){
+
+const nonce = getNonce();
+return  `<!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; img-src ${webview.cspSource} data:; script-src 'nonce-${nonce}';">
+    </head>
+
+    <body>
+      <h2>OtterDr says 🦦</h2>
+
+      <h3>What happened:</h3>
+      <p>${encode(aiResponse.whatHappened)}</p>
+
+     <h3>Next Steps 👣:</h3>
+     <ol>
+      ${aiResponse.nextSteps.map((step: string) => `<li>${encode(step)}</li>`).join("")}
+     </ol>
+
+     <h3>Otter thoughts 💭:</h3>
+     <p>${encode(aiResponse.otterThoughts)}</p>
+     </body>
+     </html>`;
+
+   }
+      
+  
 //CLASS
 //Creating OtterViewProvider (Displays otter image)
 class OtterViewProvider implements vscode.WebviewViewProvider {
