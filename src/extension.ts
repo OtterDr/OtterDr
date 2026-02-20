@@ -46,50 +46,58 @@ export function activate(context: vscode.ExtensionContext) {
         return;
       }
 
-      //create progress view window
-      vscode.window.withProgress(
-        //withProgress gives the loading bar
-        {
-          location: vscode.ProgressLocation.Notification,
-          title: `OtterDr is now diving into your code...🤿🪸`,
-          cancellable: false,
-        },
+    //create progress view window
+    vscode.window.withProgress(
+      //withProgress gives the loading bar
+      {
+        location: vscode.ProgressLocation.Notification,
+        title: `OtterDr is now diving into your code...🤿🪸`,
+        cancellable: false,
+      },
 
-        async () => {
-          // waiting for the response from ai
-          const aiResponse = await otterTranslation(
-            //invoke our aitranslator
-            errorSelectionResult,
-            apiKey
-          );
+      async () => {
+        // waiting for the response from ai
+        const aiResponse = await otterTranslation(
+          //invoke our aitranslator
+          errorSelectionResult,
+          apiKey,
+        );
 
-          // Create and show a new webview only after getting the ai response
-          const panel = vscode.window.createWebviewPanel(
-            "webview-id", // Identifies the type of the webview. Used internally
-            "OtterDr Diagnosis 🦦", // Title of the panel displayed to the user
-            vscode.ViewColumn.Two, // Editor column to show the new webview panel in. (Opens it on the side as a split editor 'tab'!)
-            {
-              enableScripts: true, //Enable Javascript/React in the webview
-            }
-          );
-          // Webview options. More on these later.
+        // Create and show a new webview only after getting the ai response
+        const panel = vscode.window.createWebviewPanel(
+          'webview-id', // Identifies the type of the webview. Used internally
+          'OtterDr Diagnosis 🦦', // Title of the panel displayed to the user
+          vscode.ViewColumn.Two, // Editor column to show the new webview panel in. (Opens it on the side as a split editor 'tab'!)
+          {
+            enableScripts: true, //Enable Javascript/React in the webview
+            localResourceRoots: [context.extensionUri],
+          },
+        );
 
-          panel.webview.html = `<!DOCTYPE html>
-     <html lang="en">
-     <head>
-       <meta charset="UTF-8">
-       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-     </head>
-     <body>
-       <h2>OtterDr says 🦦</h2>
 
-     <h3>What happened:</h3>
-     <p>${encode(aiResponse.whatHappened)}</p>
+    const nonce = getNonce();
+    panel.webview.html = `<!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${panel.webview.cspSource} 'unsafe-inline'; img-src ${panel.webview.cspSource} data:; script-src 'nonce-${nonce}';">
+    </head>
+
+    <body>
+      <h2>OtterDr says 🦦</h2>
+
+      <h3>What happened:</h3>
+      <p>${encode(aiResponse.whatHappened)}</p>
 
      <h3>Next Steps 👣:</h3>
      <ol>
       ${aiResponse.nextSteps.map((step) => `<li>${encode(step)}</li>`).join("")}
      </ol>
+      <h3>Next Steps 👣:</h3>
+      <ol>
+        ${aiResponse.nextSteps.map((step) => `<li>${encode(step)}</li>`).join('')}
+      </ol>
 
      <h3>Otter thoughts 💭:</h3>
      <p>${encode(aiResponse.otterThoughts)}</p>
@@ -179,7 +187,10 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
     console.log("Sending error count:", count);
     console.log("View exists?", !!this._view);
   }
+
   private _getHtmlForWebview(webview: vscode.Webview) {
+    const nonce = getNonce();
+
     const defaultImage = webview.asWebviewUri(
       vscode.Uri.joinPath(this._extensionUri, "assets", "default_image.png")
     );
@@ -191,10 +202,13 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
     const confusedImage = webview.asWebviewUri(
       vscode.Uri.joinPath(this._extensionUri, "assets", "confused_image.png")
     );
+
     return /*html*/ `
     <!DOCTYPE html>
      <html lang="en">
      <head>
+      <!-- Important: Content security policy should be set here for security -->
+      <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource} data:; script-src 'nonce-${nonce}'; style-src ${webview.cspSource} 'unsafe-inline';">
        <meta charset="UTF-8">
        <meta name="viewport" content="width=device-width, initial-scale=1.0">
        <style>
@@ -207,7 +221,7 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
      <body>
        <div id="root"></div>
        <img id="otter" src="${defaultImage}" alt="Otter image">
-       <script>
+       <script nonce="${nonce}">
           let currentState = 'default';
           const img = document.getElementById("otter")
           const defaultSrc = "${defaultImage}";
@@ -246,6 +260,16 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
   }
 }
 
+//funcion to generate a random nonce to attach to our scripts
+function getNonce() {
+  const possible =
+    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let text = '';
+  for (let i = 0; i < 32; i++) {
+    text += possible.charAt(Math.floor(Math.random() * possible.length));
+  }
+  return text;
+}
 // // this method is called when your extension is deactivated
 export function deactivate() {}
 
