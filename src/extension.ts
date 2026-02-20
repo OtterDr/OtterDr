@@ -190,7 +190,7 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
       vscode.Uri.joinPath(this._extensionUri, 'assets', 'Default Image.png'),
     );
     // add any other paths in here that we want to include and ref via variable in HTML, like...
-    // const confusedOtter = webview.asWebviewUri(vscode.Uri.oinPath(this._extensionUri, 'assets', 'confused.png'));
+    // const confusedOtter = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'assets', 'confused.png'));
 
     //
 
