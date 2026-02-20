@@ -17,7 +17,7 @@ export interface ErrorFormat {
 export function errorListener(callback: (count: number) => void) {
   return vscode.languages.onDidChangeDiagnostics((event) => {
     const editor = vscode.window.activeTextEditor;
-    if (!editor) return;
+    if (!editor) {return;}
 
     //check that the changed diagnostics belong to the current file
     const activeUri = editor.document.uri;
@@ -39,7 +39,7 @@ export function errorSelection() {
   const editor = vscode.window.activeTextEditor; // this grabs the active text editor
   let selectedText;
 
-  if (!editor) return null; // if nothing active do nothing
+  if (!editor) {return null;} // if nothing active do nothing
   const document = editor.document;
   const editorUri = editor.document.uri;
   const diagnostics = vscode.languages.getDiagnostics(editorUri); //grab all errors first
@@ -60,7 +60,7 @@ export function errorSelection() {
     );
   });
 
-  if (!selectedError) return null;
+  if (!selectedError) {return null;}
 
   console.log('selected error: ', selectedError);
   //grab range to show 3 lines before and after , compare to active errors in diagnostic array
