@@ -45,12 +45,6 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.window.showErrorMessage("API key required");
         return;
       }
-    //import our apikey
-    const apiKey = await getApiKey(context);
-    if (!apiKey) {
-      vscode.window.showErrorMessage('API key required');
-      return;
-     }
 
     //create progress view window
     vscode.window.withProgress(
@@ -61,13 +55,6 @@ export function activate(context: vscode.ExtensionContext) {
         cancellable: false,
       },
 
-        async () => {
-          // waiting for the response from ai
-          const aiResponse = await otterTranslation(
-            //invoke our aitranslator
-            errorSelectionResult,
-            apiKey
-          );
       async () => {
         // waiting for the response from ai
         const aiResponse = await otterTranslation(
@@ -86,16 +73,7 @@ export function activate(context: vscode.ExtensionContext) {
             localResourceRoots: [context.extensionUri],
           },
         );
-          // Create and show a new webview only after getting the ai response
-          const panel = vscode.window.createWebviewPanel(
-            "webview-id", // Identifies the type of the webview. Used internally
-            "OtterDr Diagnosis 🦦", // Title of the panel displayed to the user
-            vscode.ViewColumn.Two, // Editor column to show the new webview panel in. (Opens it on the side as a split editor 'tab'!)
-            {
-              enableScripts: true, //Enable Javascript/React in the webview
-            }
-          );
-          // Webview options. More on these later.
+
 
     const nonce = getNonce();
     panel.webview.html = `<!DOCTYPE html>
@@ -126,11 +104,6 @@ export function activate(context: vscode.ExtensionContext) {
      </body>
      </html>`;
         }
-      <h3>Otter thoughts 💭:</h3>
-      <p>${encode(aiResponse.otterThoughts)}</p>
-    </body>
-    </html>`;
-        },
       );
     })
   );
