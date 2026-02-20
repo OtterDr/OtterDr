@@ -104,16 +104,14 @@ export function activate(context: vscode.ExtensionContext) {
           return;
         }
 
-        const panel = getOrCreatePanel();
-        panel.webview.html = `Hold your breath, OtterDr is taking a deep dive...🤿`;
-
+        
         //import our apikey
         const apiKey = await getApiKey(context);
         if (!apiKey) {
           vscode.window.showErrorMessage('API key required');
           return;
         }
-
+        
         //create progress view window
         await vscode.window.withProgress(
           //withProgress gives the loading bar
@@ -122,7 +120,7 @@ export function activate(context: vscode.ExtensionContext) {
             title: `OtterDr is now diving into your code...🤿🪸`,
             cancellable: false,
           },
-
+          
           async () => {
             // waiting for the response from ai
             const aiResponse = await otterTranslation(
@@ -130,12 +128,13 @@ export function activate(context: vscode.ExtensionContext) {
               errorSelectionResult,
               apiKey,
             );
-
+            
+            const panel = getOrCreatePanel();
+            panel.webview.html = `Hold your breath, OtterDr is taking a deep dive...🤿`;
             //after the call cache the results
             cachedTranslations[errorKey] = aiResponse;
 
             // Create and show a new webview only after getting the ai response
-            const panel = getOrCreatePanel();
             panel.webview.html = renderHTML(panel.webview, aiResponse);
           },
         );
