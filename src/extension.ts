@@ -19,6 +19,13 @@ function getErrorKey(inputError: string): string {
 // track current webview panel
 let currentPanel: vscode.WebviewPanel | undefined = undefined;
 
+let aiInProgress = false;//create a variable to handle if a ai call is in progress
+// let prevErrorKey: string | null = null;//create a variable to hold the key for a cached response(key should be an identifier from diagnostic grabbed)
+let cachedTranslations:Record<string,any>  = {};// create a var to hold the cached translation
+
+function getErrorKey(inputError: string): string{//create a function to handle grabbing the error from our error selector to use as a key
+return inputError;
+}
 export function activate(context: vscode.ExtensionContext) {
   console.log('🔴 OtterDr ACTIVATING!');
 
