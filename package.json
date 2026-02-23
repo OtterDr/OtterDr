@@ -2,10 +2,11 @@
   "name": "vscode-react-webview-starter",
   "displayName": "vscode-react-webview-starter",
   "description": "",
+  "icon": "./assets/otter-icon.png",
   "version": "0.0.1",
   "packageManager": "npm@10.8.2",
   "repository": {
-    "url": "https://github.com/estruyf/vscode-react-webview-template",
+    "url": "https://github.com/OtterDr/OtterDr.git",
     "type": "git"
   },
   "engines": {
