@@ -5,7 +5,13 @@
     <p>OtterDr is a playful yet powerful VS Code extension that helps you <b>understand and fix code errors using AI</b>, guided by an expressive otter that reacts to the health of your code.</p>
 </div>
 
-<placeholder for tags\>
+
+![GitHub License](https://img.shields.io/github/license/OtterDr/OtterDr)
+![GitHub Issues or Pull Requests](https://img.shields.io/github/issues/OtterDr/OtterDr)
+![Static Badge](https://img.shields.io/badge/TypeScript-blue?style=flat&logo=typescript&label=Made%20with&labelColor=gray)
+
+
+
 
 
 
@@ -32,9 +38,6 @@ Error messages and stack traces are often cryptic or poorly documented, leading 
 * **Learning new stacks:** Quickly deciphers unfamiliar errors when working with a new language, framework, or library  
 * **Context switching:** Saves mental energy by translating technical jargon into actionable insights without leaving your editor  
 * **Beyond a “quick fix”:** Encourages a deeper understanding of *why* an error occurred, helping you write more resilient code
-
-
-
 
 ## **Features**
 
@@ -127,8 +130,9 @@ If you need to change or remove your key later, use the Command Palette (Cmd/Ctr
 ## **🎥 Screenshots & GIFs**
 
 ### **Otter Mood Change**
+See your OtterDr's mood change depending on the health of your code
 
-\<img src="assets/otter-mood.gif" width="500"/\>
+<img src="assets/otter-emotes.gif" width="200"/>
 
 ### **Selecting an Error & Getting AI Help**
 
