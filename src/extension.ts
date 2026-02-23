@@ -1,12 +1,11 @@
-import { join } from 'path';
 import * as vscode from 'vscode';
-import { ExtensionContext, ExtensionMode, Uri, Webview } from 'vscode';
-import { MessageHandlerData } from '@estruyf/vscode';
-import { readFileSync } from 'fs';
+import * as path from 'path';
 import { errorListener, errorSelection } from './errorListening';
 import { otterTranslation } from './aiTranslator';
 import { encode } from 'html-entities';
 import { getApiKey, setApiKey, deleteApiKey } from './auth';
+
+
 
 // track current webview panel
 let currentPanel: vscode.WebviewPanel | undefined = undefined;
@@ -253,20 +252,21 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
     console.log('View exists?', !!this._view);
   }
 
-  private _getHtmlForWebview(webview: vscode.Webview) {
+  private _getHtmlForWebview(webview: vscode.Webview):string {
     const nonce = getNonce();
 
-    const defaultImage = webview.asWebviewUri(
-      vscode.Uri.joinPath(this._extensionUri, 'assets', 'default_image.png'),
+      const defaultImage = webview.asWebviewUri(
+      vscode.Uri.file(path.join(this._extensionUri.fsPath, 'assets', 'default_image.png'))
     );
 
     const happyImage = webview.asWebviewUri(
-      vscode.Uri.joinPath(this._extensionUri, 'assets', 'happy_image.png'),
+      vscode.Uri.file(path.join(this._extensionUri.fsPath, 'assets', 'happy_image.png'))
     );
 
     const confusedImage = webview.asWebviewUri(
-      vscode.Uri.joinPath(this._extensionUri, 'assets', 'confused_image.png'),
+      vscode.Uri.file(path.join(this._extensionUri.fsPath, 'assets', 'confused_image.png'))
     );
+    
 
     return /*html*/ `
     <!DOCTYPE html>
@@ -332,11 +332,6 @@ function getNonce() {
   }
   return text;
 }
-// // this method is called when your extension is deactivated
+//this method is called when your extension is deactivated
 export function deactivate() {}
 
-//  =============== Some Notes =================
-//  webviewView = instance of vscode.WebviewView; represents a custom view you registered
-// webviewView.webview = VERY important for images! The actual webview object inside that container. Can render JS, HTML, CSS, images (with some rules) and behaves like a sandboxed browser
-// webviewView.webview.html --> Is a property (NOT function), when you assign string to it VS Code loads it as full HTML doc
-// this._getHtmlForWebview --> The

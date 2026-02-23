@@ -6,7 +6,8 @@ import "./styles.css";
 
 export interface IAppProps {}
 
-export const App: React.FunctionComponent<IAppProps> = ({ }: React.PropsWithChildren<IAppProps>) => {
+// eslint-disable-next-line @typescript-eslint/naming-convention
+export const App : React.FunctionComponent<IAppProps> = ({ }: React.PropsWithChildren<IAppProps>) => {
   const [message, setMessage] = React.useState<string>("");
   const [error, setError] = React.useState<string>("");
 

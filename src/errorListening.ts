@@ -1,7 +1,5 @@
 import * as vscode from 'vscode';
 
-// pass provider in so function knows where to send the data if we're sending it to the webview -> if it goes to the panel, we may need that panel instance to be saved outside of the context.subscriptions.push() so we can pass the variable in?? Or maybe we just invoke the function to listen for the user highlights from inside that .push?
-// K-Notes: need to change html return from otterDrView to remove script part
 export interface ErrorFormat {
   message: string;
   code: number;
@@ -10,8 +8,6 @@ export interface ErrorFormat {
   selectedText: string | undefined;
   errorContext: string; // additional lines of code 3 before and 3 after
 }
-
-//K-Notes, if we want only errors for active editor, we need a listener for diagnostic changes and a listener for when user switches files, then have function that can be called from either listener that recalculates the error count
 
 // 1. errorListener - just listens for errors and tells otter when there's more than one
 export function errorListener(callback: (count: number) => void) {
@@ -112,21 +108,3 @@ export function errorSelection() {
   console.log('typederrors:', typedErrors);
   return JSON.stringify(typedErrors);
 }
-
-// returns promise with the TextDocument object (the current file in the text editor)
-
-//FOR LATER: send a message to otter webview letting it know there are errors
-// front end can use this to update the emote state
-
-//FIRST: have to add the highlight text function inside of this function so we can access the variables "selection", "selectionRange", "languageId" (this is not currently on our interface, but maybe should be?)
-
-//NEXT: use array method errors.find() to return the element/diagnostic with an err.range.start.line that matches the selectionRange of the highlighted text -> const matchingError = errors.find(<whatever gets passed in here>)
-//FOR EDGE CASES: if there are multiple errors on the same line, we may want to also compare the "selection" text to the code snippet (see how to access it below) to be sure we're grabbing the correct error diagnostic
-
-//THEN:
-// get the larger context range (rewrite how that's done below)
-// grab the relevant properties from the matching diagnostic error
-// bundle the above, along with other error info from the interface into the return object
-
-// send the errors to the provider
-// provider.sendErrorsToWebview(errorData);

@@ -3,6 +3,7 @@
 'use strict';
 
 const path = require('path');
+// eslint-disable-next-line @typescript-eslint/naming-convention
 const WebpackManifestPlugin = require('webpack-manifest-plugin').WebpackManifestPlugin;
 
 const config = [
@@ -29,7 +30,7 @@ const config = [
         },
         {
           test: /\.css$/,
-          use: ['style-loader', 'css-loader', 'postcss-loader']
+          use: ['style-loader', 'css-loader']
         }
       ]
     },
@@ -43,19 +44,22 @@ const config = [
       hot: true,
       allowedHosts: "all",
       headers: {
+        // eslint-disable-next-line @typescript-eslint/naming-convention
         "Access-Control-Allow-Origin": "*",
       }
     }
   }
 ];
 
-module.exports = (env, argv) => {
+module.exports = (/** @type {any} */ env, /** @type {{ mode: string; }} */ argv) => {
   for (const configItem of config) {
+    // @ts-ignore
     configItem.mode = argv.mode;
 
     if (argv.mode === 'production') {
       configItem.devtool = "hidden-source-map";
 
+      // @ts-ignore
       configItem.optimization = {
         splitChunks: {
           chunks: 'all',

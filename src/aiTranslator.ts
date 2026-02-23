@@ -1,7 +1,4 @@
 import OpenAI from "openai";
-import { ErrorFormat } from "./errorListening";
-
-
 
 // add typing for the otter response format
 export interface OtterResponse{
@@ -110,19 +107,4 @@ export async function otterTranslation(
       otterThoughts: "This error is drifting 🌊"
     };
   }
-
-  //   // handle  the response if you receive a valid one or an invalid one
-  //   if (!aiMessage || aiMessage.trim().length === 0) {
-  //     // checks if the message is invalid
-  //     return "🦦 Otter try again, this one is out of my depth. 🌊"; //Throw message to show valid aiMessage wasn't recieved
-  //   }
-  //   return JSON.parse(aiMessage);
-
-  //   // Original attempt with ternary:
-  //   // aiResponse.choices[0].message.content ? aiResponse.choices[0].message.content : "🦦 Otter try again, this one is out of my depth.🌊"
-  // } catch (err) {
-  //   console.error("Error Occurred with Translation:", err);
-
-  //   return `🦦 Otter can't sea a translation to that error. Please check your API key or network connection and dive back in.`;
-  // }
 }
