@@ -141,7 +141,9 @@ See your OtterDr's mood change depending on the health of your code!
 
 ### **Selecting an Error & Getting AI Help**
 
-<img src="" alt="OtterDr error explanation demo" width="500"/>
+<img src="https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExdG5ocTM5ZHZpbDMwZzlrNnBpZDA4ZnJmeWI0NnAzcHBzZGMyOW4zeiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/Z3dFKtpYsK3RlhILxb/giphy.gif" alt="OtterDr error explanation demo" width="500"/>
+
+Highlight lines with relevant code for context (including the error), and see OtterDr work its magic!
 
 ## **🛠️ Development & Contributing**
 
