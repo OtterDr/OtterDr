@@ -7,7 +7,8 @@ export async function getApiKey(
   let apiKey = await context.secrets.get('openai.apiKey');
 
   // if key isn't found, prompt user to input key
-  if (!apiKey) apiKey = await promptAndStoreApiKey(context);
+  if (!apiKey){ apiKey = await promptAndStoreApiKey(context);
+  }
   return apiKey;
 }
 
@@ -19,9 +20,9 @@ export async function promptAndStoreApiKey(context: vscode.ExtensionContext) {
     password: true, // hides input as user types
     ignoreFocusOut: true, // prevents accidental dismissal
     validateInput: (value) => {
-      if (value && value.trim().length > 0) return null;
+      if (value && value.trim().length > 0) { return null;
       return 'API key cannot be empty';
-    },
+    }},
   });
   if (key) {
     await context.secrets.store('openai.apiKey', key.trim());
