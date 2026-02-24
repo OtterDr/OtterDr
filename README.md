@@ -23,13 +23,13 @@ OtterDr is designed to make debugging:
 
 * **Less intimidating**, by simplifying complex error messages
 
-* **More educational,** by explaining the “why” behind the fix
+* **More educational**, by explaining the “why” behind the fix
 
 * And a little more **fun** 🦦
 
 ## **🧠 About the OtterDr extension**
 
-OtterDr helps you understand and fix workspace coding errors. You select the code that’s causing a problem and OtterDr sends it to AI. The AI error explanation is clearly displayed in a panel inside VS Code, offering additional suggestions for next steps.
+OtterDr helps you understand and fix workspace coding errors. You select the code that's causing a problem and OtterDr sends it to AI. The AI error explanation is clearly displayed in a panel inside VS Code, offering additional suggestions for next steps.
 
 ### **Why do you need OtterDr?**
 
@@ -47,7 +47,7 @@ Error messages and stack traces are often cryptic or poorly documented, leading 
 
 * 😕 **Visual Diagnostics:** OtterDr shows confusion when VS Code detects compiler errors or issues
 
-* 😊 **Interactivity:** Scratch OtterDr’s belly to brighten your dev session\! 
+* 😊 **Interactivity:** Scratch OtterDr's belly to brighten your dev session\! 
 
 ### **AI-Powered Assistance**
 
@@ -92,7 +92,7 @@ OtterDr requires an OpenAI API Key to generate explanations and suggestions
 
 * **First Use**: The first time you click the *OtterDr button* in the Status Bar, you will be prompted to enter your key  
 
-* **Secure Storage:** Once entered, your key is stored securely in VS Code’s **SecretStorage**
+* **Secure Storage:** Once entered, your key is stored securely in VS Code's **SecretStorage**
 
 
 ### **Manage Your API Key**
@@ -112,7 +112,7 @@ If you need to change or remove your key later, use the Command Palette (Cmd/Ctr
 
 **2️⃣ Select the Error Code**
 
-* Highlight **only the relevant code snippet** (you can include surrounding lines for context).
+* Highlight **only the relevant code snippet** (you can include surrounding lines for context)
 
 ⚠️ *Tip: Avoid selecting the entire file — keep it focused on the specific error for the most accurate AI response*
 
@@ -126,16 +126,22 @@ If you need to change or remove your key later, use the Command Palette (Cmd/Ctr
 
 ---
 
-## **🎥 Screenshots & GIFs**
+## **🎥 Demo**
 
-### **Otter Mood Change**
-See your OtterDr's mood change depending on the health of your code
+### **Otter Moods**
 
-<img src="assets/otter-emotes.gif" width="200"/>
+<img src="https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExbTMzdWJ3cG11ZmRsejFheHlwaGtzNXB4eHUzb3J5c2RmMGFkZTZlZiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/7xKv1mdOkeC1AeCDcL/giphy.gif" alt="OtterDr expression variations" width="200"/>
+
+OtterDr is very expressive, and will be happy at belly scratches and confused at errors.
+
+
+<img src="https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExYmh3ZzU3b3U2bTFlNG1qM2k3czIzZjVua2VoZW1uaHJ2OTFpbDlueiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/ucfq7tCaeN6qOLuurj/giphy.gif" alt="OtterDr mood changes in action" width="500"/>
+
+See your OtterDr's mood change depending on the health of your code!
 
 ### **Selecting an Error & Getting AI Help**
 
-\<img src="assets/otter-workflow.gif" width="500"/\>
+<img src="" alt="OtterDr error explanation demo" width="500"/>
 
 ## **🛠️ Development & Contributing**
 
@@ -168,7 +174,9 @@ We ❤️ contributions\!
 | Inline error selection | ✅ |
 | AI explanation panel | ✅ |
 | Multiple error selection | ⏳ |
-| Additional interaction choices with otter | 🙏🏻 |
+| Additional interaction choices with otter (Play, Feed etc) | 🙏🏻 |
+| Gamification features (Level up) | 🙏🏻 |
+| Unlocking skins or designs for otter based on level | 🙏🏻 |
 | Comprehensive Test Suite | 🙏🏻 |
 | Support for additional LLMs | 🙏🏻 |
 | Create user settings | 🙏🏻 |
