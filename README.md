@@ -15,13 +15,13 @@
 
 
 
-## 📌 About
+## 📌 Introduction
 
-**OtterDr** is a VS Code extension that notices errors in your code and explains them using AI. When an error appears, your otter looks confused. Just select the code causing the problem, ask OtterDr for help, and see an easy to understand explanation right inside VS Code.
+**OtterDr** (pronounced "otter-der" -- kind of like "auditor"!) is a VS Code extension that notices errors in your code and explains them using AI. When an error appears, your otter looks confused. Just select the code causing the problem, ask OtterDr for help, and see an easy to understand explanation right inside VS Code.
 
 OtterDr is designed to make debugging:
 
-* **Less intimidating**, by simplifying complex errors
+* **Less intimidating**, by simplifying complex error messages
 
 * **More educational,** by explaining the “why” behind the fix
 
@@ -29,7 +29,7 @@ OtterDr is designed to make debugging:
 
 ## **🧠 About the OtterDr extension**
 
-OtterDr helps you understand and fix workspace coding errors. You select the code that’s causing a problem and OtterDr sends it to an AI. The AI error explanation is clearly displayed in a panel inside VS Code, offering additional suggestions for next steps.
+OtterDr helps you understand and fix workspace coding errors. You select the code that’s causing a problem and OtterDr sends it to AI. The AI error explanation is clearly displayed in a panel inside VS Code, offering additional suggestions for next steps.
 
 ### **Why do you need OtterDr?**
 
@@ -43,19 +43,19 @@ Error messages and stack traces are often cryptic or poorly documented, leading 
 
 ### **Otter Mascot**
 
-* 🦦 **Real-time interaction:**, OtterDr reacts to your coding environment as you work
+* 🦦 **Real-time interaction:** OtterDr reacts to your coding environment as you work
 
-* 😕 **Visual Diagnostics:**  OtterDr shows confusion when VS Code detects compiler errors or issues
+* 😕 **Visual Diagnostics:** OtterDr shows confusion when VS Code detects compiler errors or issues
 
-* 😊 **Interactivity:**  Scratch OtterDr’s belly to brighten your dev session\! 
+* 😊 **Interactivity:** Scratch OtterDr’s belly to brighten your dev session\! 
 
 ### **AI-Powered Assistance**
 
-* 🎯 **Targeted Analysis:**  Select specific code snippets to receive focused, context-aware explanations 
+* 🎯 **Targeted Analysis:** Select specific code snippets to receive focused, context-aware explanations 
 
-* 📊 **One-Click Insights:**  Use the OtterDr Status Bar button to instantly trigger the AI response panel with insight into your highlighted code 
+* 📊 **One-Click Insights:** Use the OtterDr Status Bar button to instantly trigger the AI response panel with insight into your highlighted code 
 
-* 🤖 **Integrated UI:**  Access clear, AI-generated explanations and solutions directly within a dedicated VS Code panel 
+* 🤖 **Integrated UI:** Access clear, AI-generated explanations and solutions directly within a dedicated VS Code panel 
 
 
 ## **📥 Installation**
@@ -112,14 +112,13 @@ If you need to change or remove your key later, use the Command Palette (Cmd/Ctr
 
 **2️⃣ Select the Error Code**
 
-* Highlight **only the relevant code snippet** (you can include surrounding lines for context). 
+* Highlight **only the relevant code snippet** (you can include surrounding lines for context).
 
 ⚠️ *Tip: Avoid selecting the entire file — keep it focused on the specific error for the most accurate AI response*
 
 **3️⃣ Trigger OtterDr AI**
 
 * Click the **OtterDr button in the Status Bar.** The panel will open and send your code for analysis
-
 
 **4️⃣ View AI Explanation**
 
@@ -138,7 +137,6 @@ See your OtterDr's mood change depending on the health of your code
 
 \<img src="assets/otter-workflow.gif" width="500"/\>
 
-
 ## **🛠️ Development & Contributing**
 
 We ❤️ contributions\!
@@ -152,14 +150,13 @@ We ❤️ contributions\!
 
 3. Open a **Pull Request** for the team to review
 
-
 ### **Run in Dev Mode**
 
 1. `npm install`
 
 2. `npm run watch` (Compiles code and listens for changes)
 
-3. Press `F5` in VS Code to launch the Extension Development Host.
+3. Press `F5` in VS Code to launch the Extension Development Host
 
 ---
 
@@ -171,14 +168,12 @@ We ❤️ contributions\!
 | Inline error selection | ✅ |
 | AI explanation panel | ✅ |
 | Multiple error selection | ⏳ |
-| Auto error detection per cursor | ⏳ |
-| Custom AI prompts | 🙏🏻 |
-| Offline fallback explanations | 🙏🏻 |
+| Additional interaction choices with otter | 🙏🏻 |
 | Comprehensive Test Suite | 🙏🏻 |
 | Support for additional LLMs | 🙏🏻 |
-| Add command for user to disable extension | 🙏🏻 |
+| Create user settings | 🙏🏻 |
 
-✅ Ready  |   ⏳ In Progress  |   🙏🏻 Looking for Contributors
+✅ Ready  |  ⏳ In Progress  |  🙏🏻 Looking for Contributors
 
 ---
 
