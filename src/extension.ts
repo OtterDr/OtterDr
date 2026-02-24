@@ -186,7 +186,20 @@ export function activate(context: vscode.ExtensionContext) {
       await deleteApiKey(context);
     }),
   );
-}
+  //command to close webview panel --WIP 
+  context.subscriptions.push(
+    vscode.commands.registerCommand('otterDr.closeErrorPanel', () => {
+      vscode.window.tabGroups.all.forEach( group => {
+        group.tabs.forEach( tab => {
+          if (
+            tab.input instanceof vscode.TabInputWebview && tab.input.viewType
+          )
+        }
+        )
+      })})
+  );
+};
+
 
 function renderHTML(webview: vscode.Webview, aiResponse: any) {
   const nonce = getNonce();
