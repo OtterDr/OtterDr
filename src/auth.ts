@@ -9,8 +9,8 @@ export async function getApiKey(
   // if key isn't found, prompt user to input key
   if (!apiKey) {
     apiKey = await promptAndStoreApiKey(context);
-    return apiKey;
   }
+  return apiKey;
 }
 
 // function to prompt user to input API key and store in vscode secretStorage
