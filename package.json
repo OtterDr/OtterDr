@@ -2,7 +2,7 @@
   "name": "vscode-react-webview-starter",
   "displayName": "vscode-react-webview-starter",
   "description": "",
-  "icon": "./assets/otter-icon.png",
+  "icon": "assets/otter-icon.png",
   "version": "0.0.1",
   "packageManager": "npm@10.8.2",
   "repository": {
