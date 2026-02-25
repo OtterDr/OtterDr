@@ -1,7 +1,8 @@
 {
-  "name": "vscode-react-webview-starter",
-  "displayName": "vscode-react-webview-starter",
-  "description": "",
+  "name": "otterdr",
+  "displayName": "OtterDr",
+  "publisher": "OtterDr",
+  "description": "Debugging made otterly simple",
   "icon": "assets/otter-icon.png",
   "version": "0.0.1",
   "packageManager": "npm@10.8.2",
