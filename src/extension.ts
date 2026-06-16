@@ -6,7 +6,6 @@ import { readFileSync } from 'fs';
 import { errorListener, errorSelection } from './errorListening';
 import { otterTranslation } from './aiTranslator';
 import { encode } from 'html-entities';
-import { getApiKey, setApiKey, deleteApiKey } from './auth';
 
 // track current webview panel
 let currentPanel: vscode.WebviewPanel | undefined = undefined;
@@ -103,14 +102,23 @@ export function activate(context: vscode.ExtensionContext) {
           return;
         }
 
-        
-        //import our apikey
-        const apiKey = await getApiKey(context);
-        if (!apiKey) {
-          vscode.window.showErrorMessage('API key required');
+        const models = await vscode.lm.selectChatModels({});
+        if (models.length === 0) {
+          const action = await vscode.window.showErrorMessage(
+            'OtterDr needs a VS Code language model to work. Install one to get started.',
+            'Get GitHub Copilot',
+            'Browse Extensions'
+          );
+          if (action === 'Get GitHub Copilot') {
+            vscode.env.openExternal(vscode.Uri.parse('vscode:extension/GitHub.copilot'));
+          } else if (action === 'Browse Extensions') {
+            vscode.commands.executeCommand('workbench.extensions.search', '@category:"language models"');
+          }
           return;
         }
-        
+
+        const model = models[0];
+
         //create progress view window
         await vscode.window.withProgress(
           //withProgress gives the loading bar
@@ -119,13 +127,13 @@ export function activate(context: vscode.ExtensionContext) {
             title: `OtterDr is now diving into your code...🤿🪸`,
             cancellable: false,
           },
-          
+
           async () => {
             // waiting for the response from ai
             const aiResponse = await otterTranslation(
               //invoke our aitranslator
               errorSelectionResult,
-              apiKey,
+              model,
             );
             
             const panel = getOrCreatePanel();
@@ -164,29 +172,6 @@ export function activate(context: vscode.ExtensionContext) {
     }),
   );
 
-  // command to listen for changes to the api key so ai doesn't use old one if changed
-  context.subscriptions.push(
-    context.secrets.onDidChange(async (event) => {
-      if (event.key === 'openai.apiKey') {
-        vscode.window.showInformationMessage(
-          'OtterDr: API Key update detected',
-        );
-      }
-    }),
-  );
-  // command to set a new API key
-  context.subscriptions.push(
-    vscode.commands.registerCommand('otterDr.setApiKey', async () => {
-      await setApiKey(context);
-    }),
-  );
-
-  // command to delete API key
-  context.subscriptions.push(
-    vscode.commands.registerCommand('otterDr.deleteApiKey', async () => {
-      await deleteApiKey(context);
-    }),
-  );
 }
 
 function renderHTML(webview: vscode.Webview, aiResponse: any) {
