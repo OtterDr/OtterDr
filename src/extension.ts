@@ -103,6 +103,7 @@ export function activate(context: vscode.ExtensionContext) {
         }
 
         const models = await vscode.lm.selectChatModels({});
+        console.log('Available models:', models.map(m => m.name));
         if (models.length === 0) {
           const action = await vscode.window.showErrorMessage(
             'OtterDr needs a VS Code language model to work. Install one to get started.',
@@ -110,7 +111,7 @@ export function activate(context: vscode.ExtensionContext) {
             'Browse Extensions'
           );
           if (action === 'Get GitHub Copilot') {
-            vscode.env.openExternal(vscode.Uri.parse('vscode:extension/GitHub.copilot'));
+            vscode.env.openExternal(vscode.Uri.parse('vscode:extension/GitHub.copilot-chat'));
           } else if (action === 'Browse Extensions') {
             vscode.commands.executeCommand('workbench.extensions.search', '@category:"language models"');
           }
