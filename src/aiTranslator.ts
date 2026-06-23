@@ -69,7 +69,12 @@ export async function otterTranslation(
 
     let parsed: any;
     try {
-      parsed = JSON.parse(fullText);
+      // Strip markdown code fences if the model wrapped the response
+      const stripped = fullText.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+      // Extract the first {...} block in case there's leading/trailing prose
+      const jsonMatch = stripped.match(/\{[\s\S]*\}/);
+      const jsonText = jsonMatch ? jsonMatch[0] : stripped;
+      parsed = JSON.parse(jsonText);
     } catch (jsonErr) {
       console.error('Invalid JSON from model:', fullText);
       throw new Error('Model returned invalid JSON');

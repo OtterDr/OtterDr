@@ -113,7 +113,7 @@ export function activate(context: vscode.ExtensionContext) {
           if (action === 'Get GitHub Copilot') {
             vscode.env.openExternal(vscode.Uri.parse('vscode:extension/GitHub.copilot-chat'));
           } else if (action === 'Browse Extensions') {
-            vscode.commands.executeCommand('workbench.extensions.search', '@category:"language models"');
+            vscode.commands.executeCommand('workbench.extensions.search', 'AI');
           }
           return;
         }
