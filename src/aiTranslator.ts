@@ -80,7 +80,6 @@ export async function otterTranslation(
       ],
       temperature: 1, //increased creativity because I want it to use puns  and be friendly
     });
-    //save the response in a variable
     const rawAiMessage = aiResponse.choices[0]?.message?.content;
 
     if (!rawAiMessage) {
@@ -90,7 +89,8 @@ export async function otterTranslation(
      let parsed: any;
 
     try {
-      parsed = JSON.parse(rawAiMessage);// turns error into json
+      // model is expected to return valid JSON matching OtterResponse shape; if not, the outer catch returns the fallback
+      parsed = JSON.parse(rawAiMessage);
     } catch (jsonErr) {
       console.error("Invalid JSON from model:", rawAiMessage);
       throw new Error("Model returned invalid JSON");
@@ -101,7 +101,8 @@ export async function otterTranslation(
   } catch (err) {
     console.error("Error Occurred with Translation:", err);
 
-    return {// shape error in same format
+    // fallback response preserves the OtterResponse shape so callers never need to handle a null
+    return {
       whatHappened: "OtterDr had trouble understanding this error clearly.",
       nextSteps: [
         "Try selecting the error again starting with the line with red squiggle.",
@@ -111,18 +112,4 @@ export async function otterTranslation(
     };
   }
 
-  //   // handle  the response if you receive a valid one or an invalid one
-  //   if (!aiMessage || aiMessage.trim().length === 0) {
-  //     // checks if the message is invalid
-  //     return "🦦 Otter try again, this one is out of my depth. 🌊"; //Throw message to show valid aiMessage wasn't recieved
-  //   }
-  //   return JSON.parse(aiMessage);
-
-  //   // Original attempt with ternary:
-  //   // aiResponse.choices[0].message.content ? aiResponse.choices[0].message.content : "🦦 Otter try again, this one is out of my depth.🌊"
-  // } catch (err) {
-  //   console.error("Error Occurred with Translation:", err);
-
-  //   return `🦦 Otter can't sea a translation to that error. Please check your API key or network connection and dive back in.`;
-  // }
 }

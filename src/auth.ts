@@ -32,12 +32,10 @@ export async function promptAndStoreApiKey(context: vscode.ExtensionContext) {
   return undefined;
 }
 
-// function to allow user to update API key
 export async function setApiKey(context: vscode.ExtensionContext) {
     await promptAndStoreApiKey(context);
 }
 
-// function to allow user to delete API key
 export async function deleteApiKey(context: vscode.ExtensionContext) {
   await context.secrets.delete('openai.apiKey');
   vscode.window.showInformationMessage('API key deleted');
