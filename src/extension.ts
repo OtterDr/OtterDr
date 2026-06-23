@@ -1,8 +1,9 @@
-import { join } from 'path';
+// FIX: removed unused named imports (ExtensionContext, ExtensionMode, Uri, Webview) and
+// MessageHandlerData from @estruyf/vscode. That package pulls in vscode@1.1.37 (a legacy
+// npm package) which ships its own vscode.d.ts and conflicts with @types/vscode@1.71.0,
+// causing ~200 TS errors and hiding modern APIs like asWebviewUri and Uri.joinPath.
+// The conflict is resolved in tsconfig.json via skipLibCheck + paths — see comments there.
 import * as vscode from 'vscode';
-import { ExtensionContext, ExtensionMode, Uri, Webview } from 'vscode';
-import { MessageHandlerData } from '@estruyf/vscode';
-import { readFileSync } from 'fs';
 import { errorListener, errorSelection } from './errorListening';
 import { otterTranslation } from './aiTranslator';
 import { encode } from 'html-entities';
@@ -10,27 +11,24 @@ import { encode } from 'html-entities';
 // track current webview panel
 let currentPanel: vscode.WebviewPanel | undefined = undefined;
 
-let aiInProgress = false;//create a variable to handle if a ai call is in progress
-// let prevErrorKey: string | null = null;//create a variable to hold the key for a cached response(key should be an identifier from diagnostic grabbed)
-let cachedTranslations:Record<string,any>  = {};// create a var to hold the cached translation
+let aiInProgress = false;
+let cachedTranslations: Record<string, any> = {};
 
-function getErrorKey(inputError: string): string{//create a function to handle grabbing the error from our error selector to use as a key
-return inputError;
+function getErrorKey(inputError: string): string {
+  return inputError;
 }
 export function activate(context: vscode.ExtensionContext) {
   console.log('🔴 OtterDr ACTIVATING!');
 
   // !!OtterViewProvider class is created later, outside of the activate function!!
-  // Creates a new Instance of the otterview
   const provider = new OtterViewProvider(context.extensionUri);
 
-  //function to get current panel or create new one
+  // Returns the existing panel if open, otherwise creates a new split-editor panel
   const getOrCreatePanel = () => {
     if (currentPanel) {
       // if there's already a panel, show it in the target column
       currentPanel.reveal(vscode.ViewColumn.Two);
     } else {
-      // otherwise, create a new panel
       currentPanel = vscode.window.createWebviewPanel(
         'webview-id', // Identifies the type of the webview. Used internally
         'OtterDr Diagnosis 🦦', // Title of the panel displayed to the user
@@ -67,20 +65,20 @@ export function activate(context: vscode.ExtensionContext) {
 
   context.subscriptions.push(errorCount);
 
-  // Register a command for Status Bar Item: For displaying the OtterDr error analysis on a separate tab & For highlighting & selecting text in code, sending error to backend and receiving response
+  // Triggered by status bar click: checks cache before making an AI call,
+  // then opens the diagnosis panel with the translated error response
   context.subscriptions.push(
     vscode.commands.registerCommand('otterDr.openWebview', async () => {
-      //after checking cache ai call will actively happen if no cache is found so we handle multiple calls here
+      // guard against overlapping AI calls while one is in progress
       if (aiInProgress) {
-        //if this is truthy ai is processing the request
         vscode.window.showInformationMessage(
           'OtterDr is already fishing for a solution. 🦦',
-        ); //udate to the user that ai is processing with mini pop up
-        return; //breaks out of call attempt
+        );
+        return;
       }
 
       try {
-        aiInProgress = true; //if it wasn't in progress it is now so update the var to true
+        aiInProgress = true;
 
         const errorSelectionResult = errorSelection();
         if (!errorSelectionResult) {
@@ -88,12 +86,12 @@ export function activate(context: vscode.ExtensionContext) {
           return;
         }
 
-        const errorKey = getErrorKey(errorSelectionResult); //assign error to be the errorkey for cache obj
+        const errorKey = getErrorKey(errorSelectionResult);
 
+        // serve cached response if this exact error was already translated
         if (cachedTranslations[errorKey]) {
           console.log('Using Cached Translation');
 
-          //check if there is a webview or create new one for cached info
           const panel = getOrCreatePanel();
           panel.webview.html = renderHTML(
             panel.webview,
@@ -122,7 +120,6 @@ export function activate(context: vscode.ExtensionContext) {
 
         //create progress view window
         await vscode.window.withProgress(
-          //withProgress gives the loading bar
           {
             location: vscode.ProgressLocation.Notification,
             title: `OtterDr is now diving into your code...🤿🪸`,
@@ -130,19 +127,17 @@ export function activate(context: vscode.ExtensionContext) {
           },
 
           async () => {
-            // waiting for the response from ai
             const aiResponse = await otterTranslation(
-              //invoke our aitranslator
               errorSelectionResult,
               model,
             );
-            
+
             const panel = getOrCreatePanel();
             panel.webview.html = `Hold your breath, OtterDr is taking a deep dive...🤿`;
-            //after the call cache the results
+            // cache before rendering so repeated clicks skip the API call
             cachedTranslations[errorKey] = aiResponse;
 
-            // Create and show a new webview only after getting the ai response
+            // render only after the response is ready so the panel never shows stale content
             panel.webview.html = renderHTML(panel.webview, aiResponse);
           },
         );
@@ -155,7 +150,7 @@ export function activate(context: vscode.ExtensionContext) {
     }),
   );
 
-  // Create a new status bar item that we can now manage (Also lets commands above run when clicked) -- Completed!
+  // Create a new status bar item that we can now manage (Also lets commands above run when clicked)
   const myStatusBarItem = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Right,
     100,
@@ -202,8 +197,7 @@ function renderHTML(webview: vscode.Webview, aiResponse: any) {
      </html>`;
 }
 
-//CLASS
-//Creating OtterViewProvider (Displays otter image)
+// OtterViewProvider renders the otter image in the explorer sidebar view
 class OtterViewProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = 'otterDr.otterView';
   private _view?: vscode.WebviewView;
@@ -217,7 +211,6 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
     this._view = webviewView;
 
     webviewView.webview.options = {
-      // Allow scripts in the webview
       enableScripts: true,
       // Restricts webview to loading content only from our extension ("localResourceRoots defines a set of root URIs from which local content may be loaded" - https://code.visualstudio.com/api/extension-guides/webview#controlling-access-to-local-resources)
       localResourceRoots: [this._extensionUri],
@@ -235,8 +228,6 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
         count: count,
       });
     }
-    console.log('Sending error count:', count);
-    console.log('View exists?', !!this._view);
   }
 
   private _getHtmlForWebview(webview: vscode.Webview) {
@@ -308,7 +299,7 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
   }
 }
 
-//funcion to generate a random nonce to attach to our scripts
+// function to generate a random nonce to attach to our scripts
 function getNonce() {
   const possible =
     'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -318,7 +309,7 @@ function getNonce() {
   }
   return text;
 }
-// // this method is called when your extension is deactivated
+// this method is called when your extension is deactivated
 export function deactivate() {}
 
 //  =============== Some Notes =================
