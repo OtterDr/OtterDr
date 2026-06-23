@@ -1,8 +1,10 @@
-<div align="center">
+<div>
+<p align="center">
     <img src="assets/otter-icon.png" alt="OtterDr Logo" width="128" />
     <h1>OtterDr</h1>
     <h3><em>Your Friendly AI Debugging Companion</em></h3>
     <p>OtterDr is a playful yet powerful VS Code extension that helps you <b>understand and fix code errors using AI</b>, guided by an expressive otter that reacts to the health of your code.</p>
+    </p>
 </div>
 
 

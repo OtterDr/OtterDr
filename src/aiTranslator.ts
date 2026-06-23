@@ -1,9 +1,5 @@
-import OpenAI from "openai";
-import { ErrorFormat } from "./errorListening";
+import * as vscode from 'vscode';
 
-
-
-// add typing for the otter response format
 export interface OtterResponse{
   whatHappened: string;
   nextSteps:string[];
@@ -12,15 +8,12 @@ export interface OtterResponse{
 
 export async function otterTranslation(
   error: string,
-  apiKey: string,
+  model: vscode.LanguageModelChat,
 ): Promise<OtterResponse> {
-  if (!apiKey) {
-    throw new Error("apiKey is required.");
-  }
 
-  const systemPrompt = `You are an Otter AI, friendly programming assistant who specializes in compiler and runtime errors. 
-  
-  You will recieve a JSON Object with this exact structure: 
+  const systemPrompt = `You are an Otter AI, friendly programming assistant who specializes in compiler and runtime errors.
+
+  You will recieve a JSON Object with this exact structure:
 {
   "message": string,
   "code":  number ,
@@ -30,7 +23,7 @@ export async function otterTranslation(
   "errorContext": string,
 }
 
-  RULES: 
+  RULES:
     - Use only the information in the JSON object.
     - Translate technical error messages into clear, plain English.
     - Only use the error context to better understand the provided diagnostic error.
@@ -44,7 +37,7 @@ export async function otterTranslation(
 
     If the JSON cannot be parsed, respond with:
 "OtterDr couldn't understand this error yet — please select a valid compiler error 🦦"
-    
+
   OUTPUT FORMAT (follow exactly):
     Return ONLY valid JSON in this exact shape:
 
@@ -62,54 +55,43 @@ export async function otterTranslation(
 `;
 
   try {
-    const openai = new OpenAI({ apiKey });
-    const aiResponse = await openai.chat.completions.create({
-      model: "gpt-5-nano",
-      //using messages tells the model how to behave and what to respond to
-      messages: [
-        {
-          //system role = model's rules and personality
-          role: "system",
-          content: systemPrompt.trim(), // trim just gets rid of white space sent to the model
-        },
-        {
-          //user role = input from vscode error
-          role: "user",
-          content: `Here is the error JSON to translate: ${error}`
-        },
-      ],
-      temperature: 1, //increased creativity because I want it to use puns  and be friendly
-    });
-    const rawAiMessage = aiResponse.choices[0]?.message?.content;
+    const messages = [
+      vscode.LanguageModelChatMessage.User(systemPrompt.trim()),
+      vscode.LanguageModelChatMessage.User(`Here is the error JSON to translate: ${error}`),
+    ];
 
-    if (!rawAiMessage) {
-      throw new Error("No response content from model");
+    const response = await model.sendRequest(messages, {});
+
+    let fullText = '';
+    for await (const chunk of response.text) {
+      fullText += chunk;
     }
-    
-     let parsed: any;
 
+    let parsed: any;
     try {
-      // model is expected to return valid JSON matching OtterResponse shape; if not, the outer catch returns the fallback
-      parsed = JSON.parse(rawAiMessage);
+      // Strip markdown code fences if the model wrapped the response
+      const stripped = fullText.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+      // Extract the first {...} block in case there's leading/trailing prose
+      const jsonMatch = stripped.match(/\{[\s\S]*\}/);
+      const jsonText = jsonMatch ? jsonMatch[0] : stripped;
+      parsed = JSON.parse(jsonText);
     } catch (jsonErr) {
-      console.error("Invalid JSON from model:", rawAiMessage);
-      throw new Error("Model returned invalid JSON");
+      console.error('Invalid JSON from model:', fullText);
+      throw new Error('Model returned invalid JSON');
     }
 
     return parsed;
 
   } catch (err) {
-    console.error("Error Occurred with Translation:", err);
+    console.error('Error Occurred with Translation:', err);
 
-    // fallback response preserves the OtterResponse shape so callers never need to handle a null
     return {
-      whatHappened: "OtterDr had trouble understanding this error clearly.",
+      whatHappened: 'OtterDr had trouble understanding this error clearly.',
       nextSteps: [
-        "Try selecting the error again starting with the line with red squiggle.",
-        "Make sure your internet connection is stable."
+        'Try selecting the error again starting with the line with red squiggle.',
+        'Make sure your internet connection is stable.',
       ],
-      otterThoughts: "This error is drifting 🌊"
+      otterThoughts: 'This error is drifting 🌊',
     };
   }
-
 }
