@@ -1,8 +1,3 @@
-// FIX: removed unused named imports (ExtensionContext, ExtensionMode, Uri, Webview) and
-// MessageHandlerData from @estruyf/vscode. That package pulls in vscode@1.1.37 (a legacy
-// npm package) which ships its own vscode.d.ts and conflicts with @types/vscode@1.71.0,
-// causing ~200 TS errors and hiding modern APIs like asWebviewUri and Uri.joinPath.
-// The conflict is resolved in tsconfig.json via skipLibCheck + paths — see comments there.
 import * as vscode from 'vscode';
 import { errorListener, errorSelection } from './errorListening';
 import { otterTranslation } from './aiTranslator';
@@ -20,19 +15,18 @@ function getErrorKey(inputError: string): string {
 export function activate(context: vscode.ExtensionContext) {
   console.log('🔴 OtterDr ACTIVATING!');
 
-  // !!OtterViewProvider class is created later, outside of the activate function!!
   const provider = new OtterViewProvider(context.extensionUri);
 
   // Returns the existing panel if open, otherwise creates a new split-editor panel
   const getOrCreatePanel = () => {
     if (currentPanel) {
-      // if there's already a panel, show it in the target column
+    
       currentPanel.reveal(vscode.ViewColumn.Two);
     } else {
       currentPanel = vscode.window.createWebviewPanel(
-        'webview-id', // Identifies the type of the webview. Used internally
-        'OtterDr Diagnosis 🦦', // Title of the panel displayed to the user
-        vscode.ViewColumn.Two, // Editor column to show the new webview panel in. (Opens it on the side as a split editor 'tab'!)
+        'webview-id', 
+        'OtterDr Diagnosis 🦦', 
+        vscode.ViewColumn.Two, 
         {
           enableScripts: true, //Enable Javascript/React in the webview
           localResourceRoots: [context.extensionUri],
@@ -222,7 +216,6 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
   }
 
   // method to push error data to the webview
-  // CHANGE BELOW - only send a message telling otterView that there's an error, no error info
   public sendErrorCountToWebview(count: number) {
     if (this._view) {
       this._view.webview.postMessage({
@@ -314,8 +307,4 @@ function getNonce() {
 // this method is called when your extension is deactivated
 export function deactivate() {}
 
-//  =============== Some Notes =================
-//  webviewView = instance of vscode.WebviewView; represents a custom view you registered
-// webviewView.webview = VERY important for images! The actual webview object inside that container. Can render JS, HTML, CSS, images (with some rules) and behaves like a sandboxed browser
-// webviewView.webview.html --> Is a property (NOT function), when you assign string to it VS Code loads it as full HTML doc
-// this._getHtmlForWebview --> The method. Usually returns a valid HTML in the form of a string
+
