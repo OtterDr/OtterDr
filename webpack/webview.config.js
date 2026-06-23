@@ -3,8 +3,10 @@
 'use strict';
 
 const path = require('path');
+// eslint-disable-next-line @typescript-eslint/naming-convention
 const WebpackManifestPlugin = require('webpack-manifest-plugin').WebpackManifestPlugin;
 
+/** @type {(import('webpack').Configuration & { devServer?: import('webpack-dev-server').Configuration })[]} */
 const config = [
   {
     name: 'webview',
@@ -43,12 +45,14 @@ const config = [
       hot: true,
       allowedHosts: "all",
       headers: {
+        // eslint-disable-next-line @typescript-eslint/naming-convention
         "Access-Control-Allow-Origin": "*",
       }
     }
   }
 ];
 
+/** @type {(env: any, argv: { mode: 'none' | 'development' | 'production' }) => import('webpack').Configuration[]} */
 module.exports = (env, argv) => {
   for (const configItem of config) {
     configItem.mode = argv.mode;
