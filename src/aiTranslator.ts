@@ -55,6 +55,8 @@ export async function otterTranslation(
 `;
 
   try {
+    // VS Code's chat API only has User/Assistant roles, so the system
+    // prompt is sent as a leading User message instead of a system role
     const messages = [
       vscode.LanguageModelChatMessage.User(systemPrompt.trim()),
       vscode.LanguageModelChatMessage.User(`Here is the error JSON to translate: ${error}`),

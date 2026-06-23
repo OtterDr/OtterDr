@@ -100,9 +100,11 @@ export function activate(context: vscode.ExtensionContext) {
           return;
         }
 
+        // request any available VS Code chat model (e.g. GitHub Copilot) — no API key needed
         const models = await vscode.lm.selectChatModels({});
         console.log('Available models:', models.map(m => m.name));
         if (models.length === 0) {
+          // no chat model installed — point the user at how to get one
           const action = await vscode.window.showErrorMessage(
             'OtterDr needs a VS Code language model to work. Install one to get started.',
             'Get GitHub Copilot',
@@ -118,7 +120,7 @@ export function activate(context: vscode.ExtensionContext) {
 
         const model = models[0];
 
-        //create progress view window
+        // show a progress notification while the AI call is in flight
         await vscode.window.withProgress(
           {
             location: vscode.ProgressLocation.Notification,
