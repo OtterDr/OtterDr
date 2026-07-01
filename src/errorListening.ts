@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 
+// shape of a single error bundled for the AI — one per diagnostic collected
 export interface ErrorFormat {
   message: string;
   code: number;
@@ -43,6 +44,7 @@ export function errorSelection(): string | null {
       (d.range.contains(cursorPosition) ||
         d.range.intersection(selection) !== undefined)
     )
+    // cap at 5 to keep the AI prompt within a reasonable token budget
     .slice(0, 5);
 
   if (selectedErrors.length === 0) { return null; }

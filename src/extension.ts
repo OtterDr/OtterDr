@@ -85,8 +85,10 @@ export function activate(context: vscode.ExtensionContext) {
         }
 
         const errors: ErrorFormat[] = JSON.parse(errorSelectionResult);
+        // pre-sized so cached and fresh responses can be slotted back by original index
         const results: OtterResponse[] = new Array(errors.length);
         const uncachedErrors: ErrorFormat[] = [];
+        // track original positions so fresh AI responses can be merged back in order with cached ones
         const uncachedIndices: number[] = [];
 
         // split errors into cached vs uncached — serve cached ones immediately
@@ -185,6 +187,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 }
 
+// renders one diagnosis card per error; shows numbered headings when more than one is present
 function renderHTML(webview: vscode.Webview, aiResponses: OtterResponse[]) {
   const nonce = getNonce();
 

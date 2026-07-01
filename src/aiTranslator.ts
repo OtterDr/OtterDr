@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 
+// one AI-translated result per error; mirrors the structure rendered in the diagnosis panel
 export interface OtterResponse {
   whatHappened: string;
   nextSteps: string[];
@@ -64,6 +65,7 @@ export async function otterTranslation(
 
     const response = await model.sendRequest(messages, {});
 
+    // vscode.lm streams the response in chunks; accumulate before parsing
     let fullText = '';
     for await (const chunk of response.text) {
       fullText += chunk;
@@ -87,6 +89,7 @@ export async function otterTranslation(
   } catch (err) {
     console.error('Error Occurred with Translation:', err);
 
+    // return a valid OtterResponse[] so the panel always renders something even on failure
     return [{
       whatHappened: 'OtterDr had trouble understanding these errors clearly.',
       nextSteps: [
