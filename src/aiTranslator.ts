@@ -1,57 +1,57 @@
 import * as vscode from 'vscode';
 
-export interface OtterResponse{
+export interface OtterResponse {
   whatHappened: string;
-  nextSteps:string[];
+  nextSteps: string[];
   otterThoughts: string;
 }
 
 export async function otterTranslation(
-  error: string,
+  errors: string,  // JSON array of ErrorFormat[]
   model: vscode.LanguageModelChat,
-): Promise<OtterResponse> {
+): Promise<OtterResponse[]> {
 
   const systemPrompt = `You are an Otter AI, friendly programming assistant who specializes in compiler and runtime errors.
 
-  You will recieve a JSON Object with this exact structure:
+  You will receive a JSON Array of error objects, each with this exact structure:
 {
   "message": string,
-  "code":  number ,
+  "code": number,
   "source": string,
-  "fileSource": string ,
+  "fileSource": string,
   "selectedText": string | null,
   "errorContext": string,
 }
 
   RULES:
-    - Use only the information in the JSON object.
+    - Translate each error separately, in the same order as the input array.
+    - Use only the information provided in each object.
     - Translate technical error messages into clear, plain English.
-    - Only use the error context to better understand the provided diagnostic error.
+    - Only use the error context to better understand the diagnostic error.
     - Use a kind and encouraging tone.
     - Do NOT mention JSON, diagnostics, or internal tooling.
     - Include a light sea or ocean-themed pun (otter/ocean related) when appropriate.
-    - Provide 2-3 actionable next steps the developer can try.
-    - Do NOT be sarcastic.
-    - Do NOT be overly verbose.
-    - Do NOT invent solutions unrelated to the error.
+    - Provide 2-3 actionable next steps per error.
+    - Do NOT be sarcastic, overly verbose, or invent unrelated solutions.
+    - The response array MUST have the same number of elements as the input, in the same order.
 
-    If the JSON cannot be parsed, respond with:
-"OtterDr couldn't understand this error yet — please select a valid compiler error 🦦"
+    If the input cannot be parsed, return a single-element array:
+[{"whatHappened": "OtterDr couldn't understand these errors yet — please select valid compiler errors 🦦", "nextSteps": [], "otterThoughts": ""}]
 
   OUTPUT FORMAT (follow exactly):
-    Return ONLY valid JSON in this exact shape:
+    Return ONLY a valid JSON array where each element matches:
 
-{
-  "whatHappened": string,
-  "nextSteps": string[],
-  "otterThoughts": string
-}
+[
+  {
+    "whatHappened": string,
+    "nextSteps": string[],
+    "otterThoughts": string
+  }
+]
 
-   IMPORTANT:
-- Do NOT use Markdown symbols like **, #, -, or bullet characters.
-- Return plain rendered text only.
-- Do not wrap the response in code blocks.
-- Do not add extra sections.
+  IMPORTANT:
+- No Markdown symbols (**, #, -, bullets).
+- Plain text only — no code blocks, no extra sections.
 `;
 
   try {
@@ -59,7 +59,7 @@ export async function otterTranslation(
     // prompt is sent as a leading User message instead of a system role
     const messages = [
       vscode.LanguageModelChatMessage.User(systemPrompt.trim()),
-      vscode.LanguageModelChatMessage.User(`Here is the error JSON to translate: ${error}`),
+      vscode.LanguageModelChatMessage.User(`Here are the errors to translate: ${errors}`),
     ];
 
     const response = await model.sendRequest(messages, {});
@@ -73,8 +73,8 @@ export async function otterTranslation(
     try {
       // Strip markdown code fences if the model wrapped the response
       const stripped = fullText.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
-      // Extract the first {...} block in case there's leading/trailing prose
-      const jsonMatch = stripped.match(/\{[\s\S]*\}/);
+      // Extract the first [...] array block in case there's leading/trailing prose
+      const jsonMatch = stripped.match(/\[[\s\S]*\]/);
       const jsonText = jsonMatch ? jsonMatch[0] : stripped;
       parsed = JSON.parse(jsonText);
     } catch (jsonErr) {
@@ -87,13 +87,13 @@ export async function otterTranslation(
   } catch (err) {
     console.error('Error Occurred with Translation:', err);
 
-    return {
-      whatHappened: 'OtterDr had trouble understanding this error clearly.',
+    return [{
+      whatHappened: 'OtterDr had trouble understanding these errors clearly.',
       nextSteps: [
-        'Try selecting the error again starting with the line with red squiggle.',
+        'Try selecting the errors again starting with the red squiggle lines.',
         'Make sure your internet connection is stable.',
       ],
-      otterThoughts: 'This error is drifting 🌊',
-    };
+      otterThoughts: 'These errors are drifting 🌊',
+    }];
   }
 }

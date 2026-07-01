@@ -1,16 +1,20 @@
 import * as vscode from 'vscode';
-import { errorListener, errorSelection } from './errorListening';
-import { otterTranslation } from './aiTranslator';
+import { errorListener, errorSelection, ErrorFormat } from './errorListening';
+import { otterTranslation, OtterResponse } from './aiTranslator';
 import { encode } from 'html-entities';
 
 // track current webview panel
 let currentPanel: vscode.WebviewPanel | undefined = undefined;
 
 let aiInProgress = false;
-let cachedTranslations: Record<string, any> = {};
+// cache keyed per individual error — not per batch — so any previously
+// seen error is served from cache regardless of what else is selected
+let cachedTranslations: Record<string, OtterResponse> = {};
 
-function getErrorKey(inputError: string): string {
-  return inputError;
+// stable key excludes selectedText since that varies with highlight length;
+// a change to errorContext (surrounding code) naturally busts the cache if the file changes
+function getErrorKey(error: ErrorFormat): string {
+  return `${error.fileSource}::${error.code}::${error.message}::${error.errorContext}`;
 }
 export function activate(context: vscode.ExtensionContext) {
   console.log('🔴 OtterDr ACTIVATING!');
@@ -80,17 +84,27 @@ export function activate(context: vscode.ExtensionContext) {
           return;
         }
 
-        const errorKey = getErrorKey(errorSelectionResult);
+        const errors: ErrorFormat[] = JSON.parse(errorSelectionResult);
+        const results: OtterResponse[] = new Array(errors.length);
+        const uncachedErrors: ErrorFormat[] = [];
+        const uncachedIndices: number[] = [];
 
-        // serve cached response if this exact error was already translated
-        if (cachedTranslations[errorKey]) {
+        // split errors into cached vs uncached — serve cached ones immediately
+        errors.forEach((error, i) => {
+          const key = getErrorKey(error);
+          if (cachedTranslations[key]) {
+            results[i] = cachedTranslations[key];
+          } else {
+            uncachedErrors.push(error);
+            uncachedIndices.push(i);
+          }
+        });
+
+        if (uncachedErrors.length === 0) {
+          // every error was already cached — no AI call needed
           console.log('Using Cached Translation');
-
           const panel = getOrCreatePanel();
-          panel.webview.html = renderHTML(
-            panel.webview,
-            cachedTranslations[errorKey],
-          );
+          panel.webview.html = renderHTML(panel.webview, results);
           return;
         }
 
@@ -123,18 +137,23 @@ export function activate(context: vscode.ExtensionContext) {
           },
 
           async () => {
-            const aiResponse = await otterTranslation(
-              errorSelectionResult,
+            // only send uncached errors to the AI
+            const aiResponses = await otterTranslation(
+              JSON.stringify(uncachedErrors),
               model,
             );
 
+            // cache each new response individually and slot it into the correct position
+            uncachedIndices.forEach((originalIdx, responseIdx) => {
+              const key = getErrorKey(errors[originalIdx]);
+              cachedTranslations[key] = aiResponses[responseIdx];
+              results[originalIdx] = aiResponses[responseIdx];
+            });
+
             const panel = getOrCreatePanel();
             panel.webview.html = `Hold your breath, OtterDr is taking a deep dive...🤿`;
-            // cache before rendering so repeated clicks skip the API call
-            cachedTranslations[errorKey] = aiResponse;
-
-            // render only after the response is ready so the panel never shows stale content
-            panel.webview.html = renderHTML(panel.webview, aiResponse);
+            // render only after all responses are ready
+            panel.webview.html = renderHTML(panel.webview, results);
           },
         );
       } catch (err) {
@@ -166,31 +185,38 @@ export function activate(context: vscode.ExtensionContext) {
 
 }
 
-function renderHTML(webview: vscode.Webview, aiResponse: any) {
+function renderHTML(webview: vscode.Webview, aiResponses: OtterResponse[]) {
   const nonce = getNonce();
+
+  const cards = aiResponses.map((aiResponse, i) => `
+    <div class="error-card">
+      ${aiResponses.length > 1
+        ? `<h2>Error ${i + 1} of ${aiResponses.length} 🦦</h2>`
+        : `<h2>OtterDr says 🦦</h2>`}
+      <h3>What happened:</h3>
+      <p>${encode(aiResponse.whatHappened)}</p>
+      <h3>Next Steps 👣:</h3>
+      <ol>
+        ${aiResponse.nextSteps.map((step: string) => `<li>${encode(step)}</li>`).join('')}
+      </ol>
+      <h3>Otter thoughts 💭:</h3>
+      <p>${encode(aiResponse.otterThoughts)}</p>
+    </div>
+  `).join('<hr>');
+
   return `<!DOCTYPE html>
     <html lang="en">
     <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; img-src ${webview.cspSource} data:; script-src 'nonce-${nonce}';">
+      <style>
+        .error-card { margin-bottom: 1rem; }
+        hr { border: none; border-top: 1px solid #444; margin: 1.5rem 0; }
+      </style>
     </head>
-
-    <body>
-      <h2>OtterDr says 🦦</h2>
-
-      <h3>What happened:</h3>
-      <p>${encode(aiResponse.whatHappened)}</p>
-
-     <h3>Next Steps 👣:</h3>
-     <ol>
-      ${aiResponse.nextSteps.map((step: string) => `<li>${encode(step)}</li>`).join('')}
-     </ol>
-
-     <h3>Otter thoughts 💭:</h3>
-     <p>${encode(aiResponse.otterThoughts)}</p>
-     </body>
-     </html>`;
+    <body>${cards}</body>
+    </html>`;
 }
 
 // OtterViewProvider renders the otter image in the explorer sidebar view
