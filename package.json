@@ -11,7 +11,7 @@
     "type": "git"
   },
   "engines": {
-    "vscode": "^1.71.0"
+    "vscode": "^1.90.0"
   },
   "categories": [
     "Other"
@@ -35,14 +35,6 @@
       {
         "command": "otterDr.openWebview",
         "title": "Explorer: Open OtterDr View"
-      },
-      {
-        "command": "otterDr.setApiKey",
-        "title": "OtterDr: Update API Key"
-      },
-      {
-        "command": "otterDr.deleteApiKey",
-        "title": "OtterDr: Delete API Key"
       }
     ]
   },
@@ -69,7 +61,7 @@
     "@types/react": "19.0.1",
     "@types/react-dom": "19.0.2",
     "@types/uuid": "8.3.4",
-    "@types/vscode": "1.71.0",
+    "@types/vscode": "^1.120.0",
     "@types/webpack": "5.28.1",
     "@types/webpack-dev-server": "4.7.2",
     "@typescript-eslint/eslint-plugin": "^8.56.0",
@@ -94,7 +86,6 @@
   },
   "dependencies": {
     "html-entities": "2.6.0",
-    "openai": "6.17.0",
     "vscrui": "0.3.0"
   }
 }

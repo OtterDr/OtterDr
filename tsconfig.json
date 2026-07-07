@@ -11,6 +11,16 @@
 		"sourceMap": true,
 		"rootDir": "src",
 		"strict": true,
-		"jsx": "react"
+		"jsx": "react",
+		// suppresses type conflicts between @types/vscode and the legacy vscode@1.1.37 package
+		// pulled in by @estruyf/vscode — without this, duplicate module declarations cause
+		// ~200+ errors and break resolution of modern APIs like Uri.joinPath
+		"skipLibCheck": true,
+		// forces 'vscode' module imports to resolve from @types/vscode@1.71.0 instead of the
+		// legacy vscode@1.1.37 package (pulled in by @estruyf/vscode), which predates APIs
+		// like asWebviewUri and Uri.joinPath and causes TS2339 errors in source files
+		"paths": {
+			"vscode": ["./node_modules/@types/vscode/index.d.ts"]
+		}
 	}
 }

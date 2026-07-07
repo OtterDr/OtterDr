@@ -1,128 +1,102 @@
-import OpenAI from "openai";
-import { ErrorFormat } from "./errorListening";
+import * as vscode from 'vscode';
 
-
-
-// add typing for the otter response format
-export interface OtterResponse{
+// one AI-translated result per error; mirrors the structure rendered in the diagnosis panel
+export interface OtterResponse {
   whatHappened: string;
-  nextSteps:string[];
+  nextSteps: string[];
   otterThoughts: string;
 }
 
 export async function otterTranslation(
-  error: string,
-  apiKey: string,
-): Promise<OtterResponse> {
-  if (!apiKey) {
-    throw new Error("apiKey is required.");
-  }
+  errors: string,  // JSON array of ErrorFormat[]
+  model: vscode.LanguageModelChat,
+): Promise<OtterResponse[]> {
 
-  const systemPrompt = `You are an Otter AI, friendly programming assistant who specializes in compiler and runtime errors. 
-  
-  You will recieve a JSON Object with this exact structure: 
+  const systemPrompt = `You are an Otter AI, friendly programming assistant who specializes in compiler and runtime errors.
+
+  You will receive a JSON Array of error objects, each with this exact structure:
 {
   "message": string,
-  "code":  number ,
+  "code": number,
   "source": string,
-  "fileSource": string ,
+  "fileSource": string,
   "selectedText": string | null,
   "errorContext": string,
 }
 
-  RULES: 
-    - Use only the information in the JSON object.
+  RULES:
+    - Translate each error separately, in the same order as the input array.
+    - Use only the information provided in each object.
     - Translate technical error messages into clear, plain English.
-    - Only use the error context to better understand the provided diagnostic error.
+    - Only use the error context to better understand the diagnostic error.
     - Use a kind and encouraging tone.
     - Do NOT mention JSON, diagnostics, or internal tooling.
     - Include a light sea or ocean-themed pun (otter/ocean related) when appropriate.
-    - Provide 2-3 actionable next steps the developer can try.
-    - Do NOT be sarcastic.
-    - Do NOT be overly verbose.
-    - Do NOT invent solutions unrelated to the error.
+    - Provide 2-3 actionable next steps per error.
+    - Do NOT be sarcastic, overly verbose, or invent unrelated solutions.
+    - The response array MUST have the same number of elements as the input, in the same order.
 
-    If the JSON cannot be parsed, respond with:
-"OtterDr couldn't understand this error yet — please select a valid compiler error 🦦"
-    
+    If the input cannot be parsed, return a single-element array:
+[{"whatHappened": "OtterDr couldn't understand these errors yet — please select valid compiler errors 🦦", "nextSteps": [], "otterThoughts": ""}]
+
   OUTPUT FORMAT (follow exactly):
-    Return ONLY valid JSON in this exact shape:
+    Return ONLY a valid JSON array where each element matches:
 
-{
-  "whatHappened": string,
-  "nextSteps": string[],
-  "otterThoughts": string
-}
+[
+  {
+    "whatHappened": string,
+    "nextSteps": string[],
+    "otterThoughts": string
+  }
+]
 
-   IMPORTANT:
-- Do NOT use Markdown symbols like **, #, -, or bullet characters.
-- Return plain rendered text only.
-- Do not wrap the response in code blocks.
-- Do not add extra sections.
+  IMPORTANT:
+- No Markdown symbols (**, #, -, bullets).
+- Plain text only — no code blocks, no extra sections.
 `;
 
   try {
-    const openai = new OpenAI({ apiKey });
-    const aiResponse = await openai.chat.completions.create({
-      model: "gpt-5-nano",
-      //using messages tells the model how to behave and what to respond to
-      messages: [
-        {
-          //system role = model's rules and personality
-          role: "system",
-          content: systemPrompt.trim(), // trim just gets rid of white space sent to the model
-        },
-        {
-          //user role = input from vscode error
-          role: "user",
-          content: `Here is the error JSON to translate: ${error}`
-        },
-      ],
-      temperature: 1, //increased creativity because I want it to use puns  and be friendly
-    });
-    //save the response in a variable
-    const rawAiMessage = aiResponse.choices[0]?.message?.content;
+    // VS Code's chat API only has User/Assistant roles, so the system
+    // prompt is sent as a leading User message instead of a system role
+    const messages = [
+      vscode.LanguageModelChatMessage.User(systemPrompt.trim()),
+      vscode.LanguageModelChatMessage.User(`Here are the errors to translate: ${errors}`),
+    ];
 
-    if (!rawAiMessage) {
-      throw new Error("No response content from model");
+    const response = await model.sendRequest(messages, {});
+
+    // vscode.lm streams the response in chunks; accumulate before parsing
+    let fullText = '';
+    for await (const chunk of response.text) {
+      fullText += chunk;
     }
-    
-     let parsed: any;
 
+    let parsed: any;
     try {
-      parsed = JSON.parse(rawAiMessage);// turns error into json
+      // Strip markdown code fences if the model wrapped the response
+      const stripped = fullText.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+      // Extract the first [...] array block in case there's leading/trailing prose
+      const jsonMatch = stripped.match(/\[[\s\S]*\]/);
+      const jsonText = jsonMatch ? jsonMatch[0] : stripped;
+      parsed = JSON.parse(jsonText);
     } catch (jsonErr) {
-      console.error("Invalid JSON from model:", rawAiMessage);
-      throw new Error("Model returned invalid JSON");
+      console.error('Invalid JSON from model:', fullText);
+      throw new Error('Model returned invalid JSON');
     }
 
     return parsed;
 
   } catch (err) {
-    console.error("Error Occurred with Translation:", err);
+    console.error('Error Occurred with Translation:', err);
 
-    return {// shape error in same format
-      whatHappened: "OtterDr had trouble understanding this error clearly.",
+    // return a valid OtterResponse[] so the panel always renders something even on failure
+    return [{
+      whatHappened: 'OtterDr had trouble understanding these errors clearly.',
       nextSteps: [
-        "Try selecting the error again starting with the line with red squiggle.",
-        "Make sure your internet connection is stable."
+        'Try selecting the errors again starting with the red squiggle lines.',
+        'Make sure your internet connection is stable.',
       ],
-      otterThoughts: "This error is drifting 🌊"
-    };
+      otterThoughts: 'These errors are drifting 🌊',
+    }];
   }
-
-  //   // handle  the response if you receive a valid one or an invalid one
-  //   if (!aiMessage || aiMessage.trim().length === 0) {
-  //     // checks if the message is invalid
-  //     return "🦦 Otter try again, this one is out of my depth. 🌊"; //Throw message to show valid aiMessage wasn't recieved
-  //   }
-  //   return JSON.parse(aiMessage);
-
-  //   // Original attempt with ternary:
-  //   // aiResponse.choices[0].message.content ? aiResponse.choices[0].message.content : "🦦 Otter try again, this one is out of my depth.🌊"
-  // } catch (err) {
-  //   console.error("Error Occurred with Translation:", err);
-
-  //   return `🦦 Otter can't sea a translation to that error. Please check your API key or network connection and dive back in.`;
-  // }
 }
