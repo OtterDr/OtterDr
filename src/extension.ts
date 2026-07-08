@@ -1,6 +1,8 @@
 import * as vscode from 'vscode';
 import { errorListener, errorSelection, ErrorFormat } from './errorListening';
 import { otterTranslation, OtterResponse } from './aiTranslator';
+import { GameState } from './gameState';
+import { GameManager } from './gameManager';
 import { encode } from 'html-entities';
 
 // track current webview panel
@@ -20,6 +22,19 @@ export function activate(context: vscode.ExtensionContext) {
   console.log('🔴 OtterDr ACTIVATING!');
 
   const provider = new OtterViewProvider(context.extensionUri);
+
+  // GameManager owns all XP, unlock, and equip logic.
+  // The callback forwards any state change to the sidebar without GameManager
+  // needing a direct reference to OtterViewProvider (avoids circular imports).
+  const gameManager = new GameManager(context, (state) => provider.sendStateToWebview(state));
+
+  // route equip actions from the sidebar wardrobe UI through GameManager so
+  // they are validated, persisted, and broadcast back as a single state update
+  provider.onEquipItem = (slot, itemId) => gameManager.equipItem(slot, itemId);
+
+  // push persisted state into the sidebar on first activation so cosmetics
+  // and XP render correctly before the user interacts with anything
+  gameManager.sendInitialState();
 
   // Returns the existing panel if open, otherwise creates a new split-editor panel
   const getOrCreatePanel = () => {
@@ -156,6 +171,10 @@ export function activate(context: vscode.ExtensionContext) {
             panel.webview.html = `Hold your breath, OtterDr is taking a deep dive...🤿`;
             // render only after all responses are ready
             panel.webview.html = renderHTML(panel.webview, results);
+
+            // increment the diagnosed count by the number of errors that required
+            // a real AI call — cached errors don't count toward XP since no work was done
+            await gameManager.onErrorsDiagnosed(uncachedErrors.length);
           },
         );
       } catch (err) {
@@ -227,6 +246,15 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = 'otterDr.otterView';
   private _view?: vscode.WebviewView;
 
+  // caches the last broadcast state so the webview gets current data even
+  // if it was hidden when a previous broadcast fired (e.g. panel not yet open)
+  private _latestState: GameState | null = null;
+
+  // set by activate() to route equip actions from the wardrobe UI to GameManager.
+  // Using an optional callback instead of a direct GameManager reference keeps
+  // OtterViewProvider decoupled from game logic
+  public onEquipItem?: (slot: string, itemId: string | null) => void;
+
   constructor(private readonly _extensionUri: vscode.Uri) {}
 
   public resolveWebviewView(
@@ -242,6 +270,33 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
     };
 
     webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
+
+    // single message handler for all messages coming from the webview.
+    // WEBVIEW_READY: fired by the webview script once acquireVsCodeApi() has run
+    //   and the message listener is registered — only then is it safe to postMessage
+    //   state back. Sending state before this point risks dropping it because the
+    //   webview JS hasn't finished loading yet.
+    // EQUIP_ITEM: forwarded to GameManager via callback so this provider never
+    //   touches game state directly (keeps UI logic and game logic separate)
+    webviewView.webview.onDidReceiveMessage((message) => {
+      if (message.type === 'WEBVIEW_READY') {
+        // webview JS is ready — safe to send state now without it being dropped
+        if (this._latestState) {
+          this.sendStateToWebview(this._latestState);
+        }
+      }
+
+      if (message.type === 'EQUIP_ITEM') {
+        this.onEquipItem?.(message.slot, message.itemId);
+      }
+    });
+  }
+
+  // called by GameManager via the broadcast callback whenever state changes.
+  // caches the state locally so late-joining webviews receive it on resolveWebviewView
+  public sendStateToWebview(state: GameState): void {
+    this._latestState = state;
+    this._view?.webview.postMessage({ type: 'GAME_STATE_UPDATE', state });
   }
 
   // method to push error data to the webview
@@ -287,6 +342,8 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
      <body>
        <div id="root"></div>
        <img id="otter" src="${defaultImage}" alt="Otter image">
+       <!-- xp-count is updated via GAME_STATE_UPDATE messages from GameManager -->
+       <p id="xp-count" style="font-size:0.75rem; text-align:center; opacity:0.6; margin:4px 0 0;"></p>
        <script nonce="${nonce}">
           let currentState = 'default';
           const img = document.getElementById("otter")
@@ -302,20 +359,43 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
        
           const vscode = acquireVsCodeApi();
 
+          // signal to the extension host that the webview JS has finished loading
+          // and is ready to receive postMessage calls (e.g. GAME_STATE_UPDATE).
+          // Without this, state sent immediately after setting webview.html can
+          // arrive before the message listener is registered and gets silently dropped.
+          vscode.postMessage({ type: 'WEBVIEW_READY' });
+
           window.addEventListener('message', event => {
-          const message = event.data;
-          if (message.type === 'UPDATE_ERROR_COUNT') {
-          const count = message.count;
-          console.log("Otter do something about these errors - you have: ", count);
-          
-          if (count > 0) {
-              currentState = 'confused';
-              img.src = confusedSrc;    //show error/confused image
-            } else {
-              currentState = 'default';
-              img.src = defaultSrc;
+            const message = event.data;
+
+            // UPDATE_ERROR_COUNT — fired by errorListener whenever diagnostics change;
+            // switches the otter image between default and confused states
+            if (message.type === 'UPDATE_ERROR_COUNT') {
+              const count = message.count;
+              if (count > 0) {
+                currentState = 'confused';
+                img.src = confusedSrc;
+              } else {
+                currentState = 'default';
+                img.src = defaultSrc;
+              }
             }
-          }
+
+            // GAME_STATE_UPDATE — fired by GameManager after every state change
+            // (new errors diagnosed, item unlocked, item equipped).
+            // state.diagnosedCount  → total errors translated, used to show XP progress
+            // state.unlockedItems   → array of item IDs the user has earned
+            // state.equippedItems   → map of slot → item ID currently worn
+            // cosmetic layers are rendered here once assets exist;
+            // empty assetPaths are skipped so missing art causes no visible breakage
+            if (message.type === 'GAME_STATE_UPDATE') {
+              const { state } = message;
+              const xpEl = document.getElementById('xp-count');
+              if (xpEl) {
+                xpEl.textContent = state.diagnosedCount + ' errors diagnosed';
+              }
+              // future: iterate state.equippedItems and show/hide cosmetic layers
+            }
           });
         </script>
      </body>
