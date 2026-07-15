@@ -121,7 +121,7 @@ export function activate(context: vscode.ExtensionContext) {
           // every error was already cached — no AI call needed
           console.log('Using Cached Translation');
           const panel = getOrCreatePanel();
-          panel.webview.html = renderHTML(panel.webview, results);
+          panel.webview.html = renderHTML(panel.webview, results); //!
           return;
         }
 
@@ -278,19 +278,49 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
     //   webview JS hasn't finished loading yet.
     // EQUIP_ITEM: forwarded to GameManager via callback so this provider never
     //   touches game state directly (keeps UI logic and game logic separate)
-    webviewView.webview.onDidReceiveMessage((message) => {
-      if (message.type === 'WEBVIEW_READY') {
-        // webview JS is ready — safe to send state now without it being dropped
-        if (this._latestState) {
-          this.sendStateToWebview(this._latestState);
-        }
-      }
+   
+   
+   //! Ask Delilah about this later --> I created a function for the onDidReceived
+    // webviewView.webview.onDidReceiveMessage((message) => {
+    //   if (message.type === 'WEBVIEW_READY') {
+    //     // webview JS is ready — safe to send state now without it being dropped
+    //     if (this._latestState) {
+    //       this.sendStateToWebview(this._latestState);
+    //     }
+    //   }
 
-      if (message.type === 'EQUIP_ITEM') {
-        this.onEquipItem?.(message.slot, message.itemId);
-      }
-    });
+    //   if (message.type === 'EQUIP_ITEM') {
+    //     this.onEquipItem?.(message.slot, message.itemId);
+    //   }
+    // });
+
+
+   this.activateMessengerListener()
+
   }
+
+  public testerReact (type:string, payload:OtterResponse): void{
+    this._view?.webview.postMessage({type, payload});
+  }
+
+  public activateMessengerListener():void{
+    this._view?.webview.onDidReceiveMessage(async(message)=>{
+      switch(message.type){
+        case 'renderReady':
+          await this.testerReact('renderAi',{"whatHappened":'1', "nextSteps":["1.."], "otterThoughts":"string"})
+          break;
+
+        case 'EQUIP_ITEM':
+          await this.onEquipItem?.(message.slot, message.itemId);
+          break;
+
+      }
+    })
+  }
+
+
+
+
 
   // called by GameManager via the broadcast callback whenever state changes.
   // caches the state locally so late-joining webviews receive it on resolveWebviewView
@@ -323,83 +353,113 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
     const confusedImage = webview.asWebviewUri(
       vscode.Uri.joinPath(this._extensionUri, 'assets', 'confused_image.png'),
     );
+    
+    const scriptUri = webview.asWebviewUri(
+      vscode.Uri.joinPath(this._extensionUri, 'dist', 'extension.js'),
+    );
 
-    return /*html*/ `
-    <!DOCTYPE html>
-     <html lang="en">
-     <head>
-      <!-- Important: Content security policy should be set here for security -->
-      <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource} data:; script-src 'nonce-${nonce}'; style-src ${webview.cspSource} 'unsafe-inline';">
-       <meta charset="UTF-8">
-       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-       <style>
-          img {
-            height: auto;
-            cursor: pointer;
-          }
-        </style>
-     </head>
-     <body>
-       <div id="root"></div>
-       <img id="otter" src="${defaultImage}" alt="Otter image">
-       <!-- xp-count is updated via GAME_STATE_UPDATE messages from GameManager -->
-       <p id="xp-count" style="font-size:0.75rem; text-align:center; opacity:0.6; margin:4px 0 0;"></p>
-       <script nonce="${nonce}">
-          let currentState = 'default';
-          const img = document.getElementById("otter")
-          const defaultSrc = "${defaultImage}";
-          const happySrc = "${happyImage}";
-          const confusedSrc = "${confusedImage}";
 
-          img.addEventListener("click", () => {
-          //change to happy image
-          img.src= happySrc;
-          //after 2 seconds go back to confused or default
-          setTimeout(() => { img.src = currentState === 'confused' ? confusedSrc : defaultSrc}, 2000)});
+    const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri,'webview','styles.css'));
+
+    // return /*html*/ `
+    // <!DOCTYPE html>
+    //  <html lang="en">
+    //  <head>
+    //   <!-- Important: Content security policy should be set here for security -->
+    //   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource} data:; script-src 'nonce-${nonce}'; style-src ${webview.cspSource} 'unsafe-inline';">
+    //    <meta charset="UTF-8">
+    //    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    //    <style>
+    //       img {
+    //         height: auto;
+    //         cursor: pointer;
+    //       }
+    //     </style>
+    //  </head>
+    //  <body>
+    //    <div id="root"></div>
+    //    <img id="otter" src="${defaultImage}" alt="Otter image">
+    //    <!-- xp-count is updated via GAME_STATE_UPDATE messages from GameManager -->
+    //    <p id="xp-count" style="font-size:0.75rem; text-align:center; opacity:0.6; margin:4px 0 0;"></p>
+    //    <script nonce="${nonce}">
+    //       let currentState = 'default';
+    //       const img = document.getElementById("otter")
+    //       const defaultSrc = "${defaultImage}";
+    //       const happySrc = "${happyImage}";
+    //       const confusedSrc = "${confusedImage}";
+
+    //       img.addEventListener("click", () => {
+    //       //change to happy image
+    //       img.src= happySrc;
+    //       //after 2 seconds go back to confused or default
+    //       setTimeout(() => { img.src = currentState === 'confused' ? confusedSrc : defaultSrc}, 2000)});
        
-          const vscode = acquireVsCodeApi();
+    //       const vscode = acquireVsCodeApi();
 
-          // signal to the extension host that the webview JS has finished loading
-          // and is ready to receive postMessage calls (e.g. GAME_STATE_UPDATE).
-          // Without this, state sent immediately after setting webview.html can
-          // arrive before the message listener is registered and gets silently dropped.
-          vscode.postMessage({ type: 'WEBVIEW_READY' });
+    //       // signal to the extension host that the webview JS has finished loading
+    //       // and is ready to receive postMessage calls (e.g. GAME_STATE_UPDATE).
+    //       // Without this, state sent immediately after setting webview.html can
+    //       // arrive before the message listener is registered and gets silently dropped.
+    //       vscode.postMessage({ type: 'WEBVIEW_READY' });
 
-          window.addEventListener('message', event => {
-            const message = event.data;
+    //       window.addEventListener('message', event => {
+    //         const message = event.data;
 
-            // UPDATE_ERROR_COUNT — fired by errorListener whenever diagnostics change;
-            // switches the otter image between default and confused states
-            if (message.type === 'UPDATE_ERROR_COUNT') {
-              const count = message.count;
-              if (count > 0) {
-                currentState = 'confused';
-                img.src = confusedSrc;
-              } else {
-                currentState = 'default';
-                img.src = defaultSrc;
-              }
-            }
+    //         // UPDATE_ERROR_COUNT — fired by errorListener whenever diagnostics change;
+    //         // switches the otter image between default and confused states
+    //         if (message.type === 'UPDATE_ERROR_COUNT') {
+    //           const count = message.count;
+    //           if (count > 0) {
+    //             currentState = 'confused';
+    //             img.src = confusedSrc;
+    //           } else {
+    //             currentState = 'default';
+    //             img.src = defaultSrc;
+    //           }
+    //         }
 
-            // GAME_STATE_UPDATE — fired by GameManager after every state change
-            // (new errors diagnosed, item unlocked, item equipped).
-            // state.diagnosedCount  → total errors translated, used to show XP progress
-            // state.unlockedItems   → array of item IDs the user has earned
-            // state.equippedItems   → map of slot → item ID currently worn
-            // cosmetic layers are rendered here once assets exist;
-            // empty assetPaths are skipped so missing art causes no visible breakage
-            if (message.type === 'GAME_STATE_UPDATE') {
-              const { state } = message;
-              const xpEl = document.getElementById('xp-count');
-              if (xpEl) {
-                xpEl.textContent = state.diagnosedCount + ' errors diagnosed';
-              }
-              // future: iterate state.equippedItems and show/hide cosmetic layers
-            }
-          });
-        </script>
-     </body>
-     </html> `;
+    //         // GAME_STATE_UPDATE — fired by GameManager after every state change
+    //         // (new errors diagnosed, item unlocked, item equipped).
+    //         // state.diagnosedCount  → total errors translated, used to show XP progress
+    //         // state.unlockedItems   → array of item IDs the user has earned
+    //         // state.equippedItems   → map of slot → item ID currently worn
+    //         // cosmetic layers are rendered here once assets exist;
+    //         // empty assetPaths are skipped so missing art causes no visible breakage
+    //         if (message.type === 'GAME_STATE_UPDATE') {
+    //           const { state } = message;
+    //           const xpEl = document.getElementById('xp-count');
+    //           if (xpEl) {
+    //             xpEl.textContent = state.diagnosedCount + ' errors diagnosed';
+    //           }
+    //           // future: iterate state.equippedItems and show/hide cosmetic layers
+    //         }
+    //       });
+    //     </script>
+    //  </body>
+    //  </html> `;
+
+
+    return `<!DOCTYPE html>
+      <html lang='en'>
+        <head>
+          <meta charSet="utf-8"/>
+          <meta http-equiv="Content-Security-Policy" 
+                content="default-src 'none';
+                img-src vscode-resource: https:;
+                font-src ${webview.cspSource};
+                style-src ${webview.cspSource} 'unsafe-inline';
+                script-src 'nonce-${nonce}';">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <link href="${styleUri}" rel="stylesheet">
+        </head>
+        <body>
+          <div id="root"></div>
+          <script nonce="${nonce}">
+            window.tsvscode = acquireVsCodeApi();
+          </script>
+          <script nonce="${nonce} src = "${scriptUri}"></script>
+        </body>
+      </html>`;
   }
 }
 
