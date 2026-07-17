@@ -26,7 +26,10 @@ export function activate(context: vscode.ExtensionContext) {
   // GameManager owns all XP, unlock, and equip logic.
   // The callback forwards any state change to the sidebar without GameManager
   // needing a direct reference to OtterViewProvider (avoids circular imports).
-  const gameManager = new GameManager(context, (state) => provider.sendStateToWebview(state));
+  const gameManager = new GameManager(context, (state) =>
+    provider.sendStateToWebview(state),
+  );
+
 
   // route equip actions from the sidebar wardrobe UI through GameManager so
   // they are validated, persisted, and broadcast back as a single state update
@@ -39,13 +42,12 @@ export function activate(context: vscode.ExtensionContext) {
   // Returns the existing panel if open, otherwise creates a new split-editor panel
   const getOrCreatePanel = () => {
     if (currentPanel) {
-    
       currentPanel.reveal(vscode.ViewColumn.Two);
     } else {
       currentPanel = vscode.window.createWebviewPanel(
-        'webview-id', 
-        'OtterDr Diagnosis 🦦', 
-        vscode.ViewColumn.Two, 
+        'webview-id',
+        'OtterDr Diagnosis 🦦',
+        vscode.ViewColumn.Two,
         {
           enableScripts: true, //Enable Javascript/React in the webview
           localResourceRoots: [context.extensionUri],
@@ -127,16 +129,21 @@ export function activate(context: vscode.ExtensionContext) {
 
         // request any available VS Code chat model (e.g. GitHub Copilot) — no API key needed
         const models = await vscode.lm.selectChatModels({});
-        console.log('Available models:', models.map(m => m.name));
+        console.log(
+          'Available models:',
+          models.map((m) => m.name),
+        );
         if (models.length === 0) {
           // no chat model installed — point the user at how to get one
           const action = await vscode.window.showErrorMessage(
             'OtterDr needs a VS Code language model to work. Install one to get started.',
             'Get GitHub Copilot',
-            'Browse Extensions'
+            'Browse Extensions',
           );
           if (action === 'Get GitHub Copilot') {
-            vscode.env.openExternal(vscode.Uri.parse('vscode:extension/GitHub.copilot-chat'));
+            vscode.env.openExternal(
+              vscode.Uri.parse('vscode:extension/GitHub.copilot-chat'),
+            );
           } else if (action === 'Browse Extensions') {
             vscode.commands.executeCommand('workbench.extensions.search', 'AI');
           }
@@ -203,18 +210,21 @@ export function activate(context: vscode.ExtensionContext) {
       // Whatever is sent to backend should be in a JSON format
     }),
   );
-
 }
 
 // renders one diagnosis card per error; shows numbered headings when more than one is present
 function renderHTML(webview: vscode.Webview, aiResponses: OtterResponse[]) {
   const nonce = getNonce();
 
-  const cards = aiResponses.map((aiResponse, i) => `
+  const cards = aiResponses
+    .map(
+      (aiResponse, i) => `
     <div class="error-card">
-      ${aiResponses.length > 1
-        ? `<h2>Error ${i + 1} of ${aiResponses.length} 🦦</h2>`
-        : `<h2>OtterDr says 🦦</h2>`}
+      ${
+        aiResponses.length > 1
+          ? `<h2>Error ${i + 1} of ${aiResponses.length} 🦦</h2>`
+          : `<h2>OtterDr says 🦦</h2>`
+      }
       <h3>What happened:</h3>
       <p>${encode(aiResponse.whatHappened)}</p>
       <h3>Next Steps 👣:</h3>
@@ -224,7 +234,9 @@ function renderHTML(webview: vscode.Webview, aiResponses: OtterResponse[]) {
       <h3>Otter thoughts 💭:</h3>
       <p>${encode(aiResponse.otterThoughts)}</p>
     </div>
-  `).join('<hr>');
+  `,
+    )
+    .join('<hr>');
 
   return `<!DOCTYPE html>
     <html lang="en">
@@ -278,9 +290,8 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
     //   webview JS hasn't finished loading yet.
     // EQUIP_ITEM: forwarded to GameManager via callback so this provider never
     //   touches game state directly (keeps UI logic and game logic separate)
-   
-   
-   //! Ask Delilah about this later --> I created a function for the onDidReceived
+
+    //! Ask Delilah about this later --> I created a function for the onDidReceived
     // webviewView.webview.onDidReceiveMessage((message) => {
     //   if (message.type === 'WEBVIEW_READY') {
     //     // webview JS is ready — safe to send state now without it being dropped
@@ -294,33 +305,30 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
     //   }
     // });
 
-
-   this.activateMessengerListener()
-
+    this.activateMessengerListener();
   }
 
-  public testerReact (type:string, payload:OtterResponse): void{
-    this._view?.webview.postMessage({type, payload});
+  public testerReact(type: string, payload: OtterResponse): void {
+    this._view?.webview.postMessage({ type, payload });
   }
 
-  public activateMessengerListener():void{
-    this._view?.webview.onDidReceiveMessage(async(message)=>{
-      switch(message.type){
+  public activateMessengerListener(): void {
+    this._view?.webview.onDidReceiveMessage(async (message) => {
+      switch (message.type) {
         case 'renderReady':
-          await this.testerReact('renderAi',{"whatHappened":'1', "nextSteps":["1.."], "otterThoughts":"string"})
+          await this.testerReact('renderAi', {
+            whatHappened: '1',
+            nextSteps: ['1..'],
+            otterThoughts: 'string',
+          });
           break;
 
         case 'EQUIP_ITEM':
           await this.onEquipItem?.(message.slot, message.itemId);
           break;
-
       }
-    })
+    });
   }
-
-
-
-
 
   // called by GameManager via the broadcast callback whenever state changes.
   // caches the state locally so late-joining webviews receive it on resolveWebviewView
@@ -353,13 +361,14 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
     const confusedImage = webview.asWebviewUri(
       vscode.Uri.joinPath(this._extensionUri, 'assets', 'confused_image.png'),
     );
-    
+
     const scriptUri = webview.asWebviewUri(
-      vscode.Uri.joinPath(this._extensionUri, 'dist', 'extension.js'),
+      vscode.Uri.joinPath(this._extensionUri, 'dist', 'webview', 'webview.bundle.js'),
     );
 
-
-    const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri,'webview','styles.css'));
+    const styleUri = webview.asWebviewUri(
+      vscode.Uri.joinPath(this._extensionUri, 'webview', 'styles.css'),
+    );
 
     // return /*html*/ `
     // <!DOCTYPE html>
@@ -393,7 +402,7 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
     //       img.src= happySrc;
     //       //after 2 seconds go back to confused or default
     //       setTimeout(() => { img.src = currentState === 'confused' ? confusedSrc : defaultSrc}, 2000)});
-       
+
     //       const vscode = acquireVsCodeApi();
 
     //       // signal to the extension host that the webview JS has finished loading
@@ -438,28 +447,31 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
     //  </body>
     //  </html> `;
 
-
     return `<!DOCTYPE html>
-      <html lang='en'>
-        <head>
-          <meta charSet="utf-8"/>
-          <meta http-equiv="Content-Security-Policy" 
-                content="default-src 'none';
-                img-src vscode-resource: https:;
-                font-src ${webview.cspSource};
-                style-src ${webview.cspSource} 'unsafe-inline';
-                script-src 'nonce-${nonce}';">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <link href="${styleUri}" rel="stylesheet">
-        </head>
-        <body>
-          <div id="root"></div>
-          <script nonce="${nonce}">
-            window.tsvscode = acquireVsCodeApi();
-          </script>
-          <script nonce="${nonce} src = "${scriptUri}"></script>
-        </body>
-      </html>`;
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta http-equiv="Content-Security-Policy"
+            content="default-src 'none';
+            img-src ${webview.cspSource} data:;
+            style-src ${webview.cspSource} 'unsafe-inline';
+            script-src 'nonce-${nonce}';">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     
+    </head>
+    <body>
+      <div id="root"></div>
+      <script nonce="${nonce}">
+        window.tsvscode = acquireVsCodeApi();
+        window.otterAssets = {
+          defaultImage: "${defaultImage}",
+          happyImage: "${happyImage}",
+          confusedImage: "${confusedImage}"
+        };
+      </script>
+      <script nonce="${nonce}" src="${scriptUri}"></script>
+    </body>
+    </html>`;
   }
 }
 
@@ -475,5 +487,3 @@ function getNonce() {
 }
 // this method is called when your extension is deactivated
 export function deactivate() {}
-
-

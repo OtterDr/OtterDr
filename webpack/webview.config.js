@@ -11,7 +11,7 @@ const config = [
   {
     name: 'webview',
     target: 'web',
-    entry: './src/webview/index.tsx',
+    entry: {webview:'./src/webview/index.tsx'},
     output: {
       filename: '[name].bundle.js',
       path: path.resolve(__dirname, '../dist/webview')
@@ -59,11 +59,9 @@ module.exports = (env, argv) => {
 
     if (argv.mode === 'production') {
       configItem.devtool = "hidden-source-map";
-
+      // Check this later
       configItem.optimization = {
-        splitChunks: {
-          chunks: 'all',
-        },
+        splitChunks: false
       };
     }
   }
