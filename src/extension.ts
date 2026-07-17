@@ -123,7 +123,7 @@ export function activate(context: vscode.ExtensionContext) {
           // every error was already cached — no AI call needed
           console.log('Using Cached Translation');
           const panel = getOrCreatePanel();
-          panel.webview.html = renderHTML(panel.webview, results); //!
+          panel.webview.html = renderHTML(panel.webview, results); 
           return;
         }
 
@@ -297,6 +297,7 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
     //     // webview JS is ready — safe to send state now without it being dropped
     //     if (this._latestState) {
     //       this.sendStateToWebview(this._latestState);
+             postMessage({ type: 'HAt', payload: this._latestState });
     //     }
     //   }
 
@@ -312,20 +313,15 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
     this._view?.webview.postMessage({ type, payload });
   }
 
+  //Moved out because it would get longer with the switch cases and gamefication logic
+  //Placeholder for now, later we will add more 
   public activateMessengerListener(): void {
     this._view?.webview.onDidReceiveMessage(async (message) => {
       switch (message.type) {
-        case 'renderReady':
-          await this.testerReact('renderAi', {
-            whatHappened: '1',
-            nextSteps: ['1..'],
-            otterThoughts: 'string',
-          });
-          break;
-
         case 'EQUIP_ITEM':
           await this.onEquipItem?.(message.slot, message.itemId);
           break;
+     
       }
     });
   }
@@ -333,8 +329,8 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
   // called by GameManager via the broadcast callback whenever state changes.
   // caches the state locally so late-joining webviews receive it on resolveWebviewView
   public sendStateToWebview(state: GameState): void {
-    this._latestState = state;
-    this._view?.webview.postMessage({ type: 'GAME_STATE_UPDATE', state });
+    this._latestState = state; 
+    this._view?.webview.postMessage({ type: 'GAME_STATE_UPDATE', payload: state });
   }
 
   // method to push error data to the webview
@@ -342,10 +338,12 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
     if (this._view) {
       this._view.webview.postMessage({
         type: 'UPDATE_ERROR_COUNT',
-        count: count,
+        payload: count,
       });
     }
   }
+
+
 
   private _getHtmlForWebview(webview: vscode.Webview) {
     const nonce = getNonce();
@@ -370,6 +368,8 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
       vscode.Uri.joinPath(this._extensionUri, 'webview', 'styles.css'),
     );
 
+    // // Commenting out older HTML as backup for reference
+    
     // return /*html*/ `
     // <!DOCTYPE html>
     //  <html lang="en">
@@ -447,6 +447,8 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
     //  </body>
     //  </html> `;
 
+
+    // For global.d.ts file; making the images global to be used in React (Look: "window.otterAssets")
     return `<!DOCTYPE html>
     <html lang="en">
     <head>
