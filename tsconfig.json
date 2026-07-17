@@ -23,5 +23,5 @@
 			"vscode": ["./node_modules/@types/vscode/index.d.ts"]
 		}
 	},
-	"include": ["src/**/*", "global.d.ts", "webview/**/*"]
+	"include": ["src/**/*", "global.d.ts", "webview/**/*","css.d.ts"],
 }

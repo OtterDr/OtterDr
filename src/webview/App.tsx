@@ -1,6 +1,7 @@
 import * as React from 'react';
 ///import { messageHandler } from '@estruyf/vscode/dist/client';
 import { OtterResponse } from '../aiTranslator';
+import './styles.css';
 
 
 export interface IAppProps {}

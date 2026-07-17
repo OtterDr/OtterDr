@@ -297,7 +297,7 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
     //     // webview JS is ready — safe to send state now without it being dropped
     //     if (this._latestState) {
     //       this.sendStateToWebview(this._latestState);
-             postMessage({ type: 'HAt', payload: this._latestState });
+        
     //     }
     //   }
 

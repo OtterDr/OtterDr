@@ -16,3 +16,6 @@ h1 {
 .app__error {
   color: var(--vscode-editorError-foreground);
 }
+/* body{
+  background-color: blueviolet;
+} */
