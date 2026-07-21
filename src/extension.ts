@@ -26,7 +26,9 @@ export function activate(context: vscode.ExtensionContext) {
   // GameManager owns all XP, unlock, and equip logic.
   // The callback forwards any state change to the sidebar without GameManager
   // needing a direct reference to OtterViewProvider (avoids circular imports).
-  const gameManager = new GameManager(context, (state) => provider.sendStateToWebview(state));
+  const gameManager = new GameManager(context, (state) =>
+    provider.sendStateToWebview(state),
+  );
 
   // route equip actions from the sidebar wardrobe UI through GameManager so
   // they are validated, persisted, and broadcast back as a single state update
@@ -39,13 +41,12 @@ export function activate(context: vscode.ExtensionContext) {
   // Returns the existing panel if open, otherwise creates a new split-editor panel
   const getOrCreatePanel = () => {
     if (currentPanel) {
-    
       currentPanel.reveal(vscode.ViewColumn.Two);
     } else {
       currentPanel = vscode.window.createWebviewPanel(
-        'webview-id', 
-        'OtterDr Diagnosis 🦦', 
-        vscode.ViewColumn.Two, 
+        'webview-id',
+        'OtterDr Diagnosis 🦦',
+        vscode.ViewColumn.Two,
         {
           enableScripts: true, //Enable Javascript/React in the webview
           localResourceRoots: [context.extensionUri],
@@ -127,16 +128,21 @@ export function activate(context: vscode.ExtensionContext) {
 
         // request any available VS Code chat model (e.g. GitHub Copilot) — no API key needed
         const models = await vscode.lm.selectChatModels({});
-        console.log('Available models:', models.map(m => m.name));
+        console.log(
+          'Available models:',
+          models.map((m) => m.name),
+        );
         if (models.length === 0) {
           // no chat model installed — point the user at how to get one
           const action = await vscode.window.showErrorMessage(
             'OtterDr needs a VS Code language model to work. Install one to get started.',
             'Get GitHub Copilot',
-            'Browse Extensions'
+            'Browse Extensions',
           );
           if (action === 'Get GitHub Copilot') {
-            vscode.env.openExternal(vscode.Uri.parse('vscode:extension/GitHub.copilot-chat'));
+            vscode.env.openExternal(
+              vscode.Uri.parse('vscode:extension/GitHub.copilot-chat'),
+            );
           } else if (action === 'Browse Extensions') {
             vscode.commands.executeCommand('workbench.extensions.search', 'AI');
           }
@@ -203,18 +209,21 @@ export function activate(context: vscode.ExtensionContext) {
       // Whatever is sent to backend should be in a JSON format
     }),
   );
-
 }
 
 // renders one diagnosis card per error; shows numbered headings when more than one is present
 function renderHTML(webview: vscode.Webview, aiResponses: OtterResponse[]) {
   const nonce = getNonce();
 
-  const cards = aiResponses.map((aiResponse, i) => `
+  const cards = aiResponses
+    .map(
+      (aiResponse, i) => `
     <div class="error-card">
-      ${aiResponses.length > 1
-        ? `<h2>Error ${i + 1} of ${aiResponses.length} 🦦</h2>`
-        : `<h2>OtterDr says 🦦</h2>`}
+      ${
+        aiResponses.length > 1
+          ? `<h2>Error ${i + 1} of ${aiResponses.length} 🦦</h2>`
+          : `<h2>OtterDr says 🦦</h2>`
+      }
       <h3>What happened:</h3>
       <p>${encode(aiResponse.whatHappened)}</p>
       <h3>Next Steps 👣:</h3>
@@ -224,7 +233,9 @@ function renderHTML(webview: vscode.Webview, aiResponses: OtterResponse[]) {
       <h3>Otter thoughts 💭:</h3>
       <p>${encode(aiResponse.otterThoughts)}</p>
     </div>
-  `).join('<hr>');
+  `,
+    )
+    .join('<hr>');
 
   return `<!DOCTYPE html>
     <html lang="en">
@@ -415,5 +426,3 @@ function getNonce() {
 }
 // this method is called when your extension is deactivated
 export function deactivate() {}
-
-
