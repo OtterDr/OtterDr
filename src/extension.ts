@@ -30,7 +30,6 @@ export function activate(context: vscode.ExtensionContext) {
     provider.sendStateToWebview(state),
   );
 
-
   // route equip actions from the sidebar wardrobe UI through GameManager so
   // they are validated, persisted, and broadcast back as a single state update
   provider.onEquipItem = (slot, itemId) => gameManager.equipItem(slot, itemId);
@@ -123,16 +122,18 @@ export function activate(context: vscode.ExtensionContext) {
           // every error was already cached — no AI call needed
           console.log('Using Cached Translation');
           const panel = getOrCreatePanel();
-          panel.webview.html = renderHTML(panel.webview, results); 
+          panel.webview.html = renderHTML(panel.webview, results);
           return;
         }
 
         // request any available VS Code chat model (e.g. GitHub Copilot) — no API key needed
-        const models = await vscode.lm.selectChatModels({});
+        let models = await vscode.lm.selectChatModels({});
         console.log(
           'Available models:',
           models.map((m) => m.name),
         );
+        // models = [];
+        // console.log('MODELS CLEARED: ', models);
         if (models.length === 0) {
           // no chat model installed — point the user at how to get one
           const action = await vscode.window.showErrorMessage(
@@ -150,7 +151,43 @@ export function activate(context: vscode.ExtensionContext) {
           return;
         }
 
-        const model = models[0];
+        //this'll be where i add things for when it's NOT 0, which allows for people to select which model they'd like
+        // else {
+        //   console.log('models ', models);
+        //   // // vscode.lm.selectChatModels();
+        //   models = [];
+        //   console.log('models cleared ', models);
+        //   const testAction = await vscode.window.showErrorMessage(
+        //     'MODELS DOKO',
+        //     'See models',
+        //     'reset models',
+        //   );
+        //   if (testAction === 'See models') {
+        //     vscode.window.showInformationMessage('Models: ' + models);
+        //   }
+        // }
+        // Multiple models available — present a QuickPick menu to the user
+        if (models.length > 0) {
+          const quickPickItems = models.map((m) => ({
+            label: m.name,
+            description: `${m.vendor} (${m.family})`,
+            model: m,
+          }));
+
+          const choice = await vscode.window.showQuickPick(quickPickItems, {
+            placeHolder: 'Select the AI language model for OtterDr to use',
+          });
+
+          // If the user dismissed the dropdown without selecting, exit early
+          if (!choice) {
+            return;
+          }
+
+          vscode.window.showInformationMessage('AOSDHUIFLJNK');
+        }
+
+        const model = models[8];
+        console.log('MODELS: ',model);
 
         // show a progress notification while the AI call is in flight
         await vscode.window.withProgress(
@@ -184,7 +221,7 @@ export function activate(context: vscode.ExtensionContext) {
             await gameManager.onErrorsDiagnosed(uncachedErrors.length);
           },
         );
-      } catch (err) {
+      } catch (err) {``
         console.error('AI failed:', err);
         vscode.window.showErrorMessage('OtterDr Was Swept away by confusion.');
       } finally {
@@ -297,7 +334,7 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
     //     // webview JS is ready — safe to send state now without it being dropped
     //     if (this._latestState) {
     //       this.sendStateToWebview(this._latestState);
-        
+
     //     }
     //   }
 
@@ -314,14 +351,13 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
   }
 
   //Moved out because it would get longer with the switch cases and gamefication logic
-  //Placeholder for now, later we will add more 
+  //Placeholder for now, later we will add more
   public activateMessengerListener(): void {
     this._view?.webview.onDidReceiveMessage(async (message) => {
       switch (message.type) {
         case 'EQUIP_ITEM':
           await this.onEquipItem?.(message.slot, message.itemId);
           break;
-     
       }
     });
   }
@@ -329,8 +365,11 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
   // called by GameManager via the broadcast callback whenever state changes.
   // caches the state locally so late-joining webviews receive it on resolveWebviewView
   public sendStateToWebview(state: GameState): void {
-    this._latestState = state; 
-    this._view?.webview.postMessage({ type: 'GAME_STATE_UPDATE', payload: state });
+    this._latestState = state;
+    this._view?.webview.postMessage({
+      type: 'GAME_STATE_UPDATE',
+      payload: state,
+    });
   }
 
   // method to push error data to the webview
@@ -342,8 +381,6 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
       });
     }
   }
-
-
 
   private _getHtmlForWebview(webview: vscode.Webview) {
     const nonce = getNonce();
@@ -361,7 +398,12 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
     );
 
     const scriptUri = webview.asWebviewUri(
-      vscode.Uri.joinPath(this._extensionUri, 'dist', 'webview', 'webview.bundle.js'),
+      vscode.Uri.joinPath(
+        this._extensionUri,
+        'dist',
+        'webview',
+        'webview.bundle.js',
+      ),
     );
 
     const styleUri = webview.asWebviewUri(
@@ -369,7 +411,7 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
     );
 
     // // Commenting out older HTML as backup for reference
-    
+
     // return /*html*/ `
     // <!DOCTYPE html>
     //  <html lang="en">
@@ -446,7 +488,6 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
     //     </script>
     //  </body>
     //  </html> `;
-
 
     // For global.d.ts file; making the images global to be used in React (Look: "window.otterAssets")
     return `<!DOCTYPE html>
