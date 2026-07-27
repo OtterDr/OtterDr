@@ -127,13 +127,13 @@ export function activate(context: vscode.ExtensionContext) {
         }
 
         // request any available VS Code chat model (e.g. GitHub Copilot) — no API key needed
-        let models = await vscode.lm.selectChatModels({});
+        const models = await vscode.lm.selectChatModels({});
+        let model: any; //vscode.lm.ChatModel | undefined should be the types here.
         console.log(
           'Available models:',
           models.map((m) => m.name),
         );
-        // models = [];
-        // console.log('MODELS CLEARED: ', models);
+
         if (models.length === 0) {
           // no chat model installed — point the user at how to get one
           const action = await vscode.window.showErrorMessage(
@@ -151,21 +151,6 @@ export function activate(context: vscode.ExtensionContext) {
           return;
         }
 
-        //this'll be where i add things for when it's NOT 0, which allows for people to select which model they'd like
-        // else {
-        //   console.log('models ', models);
-        //   // // vscode.lm.selectChatModels();
-        //   models = [];
-        //   console.log('models cleared ', models);
-        //   const testAction = await vscode.window.showErrorMessage(
-        //     'MODELS DOKO',
-        //     'See models',
-        //     'reset models',
-        //   );
-        //   if (testAction === 'See models') {
-        //     vscode.window.showInformationMessage('Models: ' + models);
-        //   }
-        // }
         // Multiple models available — present a QuickPick menu to the user
         if (models.length > 0) {
           const quickPickItems = models.map((m) => ({
@@ -182,12 +167,12 @@ export function activate(context: vscode.ExtensionContext) {
           if (!choice) {
             return;
           }
-
-          vscode.window.showInformationMessage('AOSDHUIFLJNK');
+          model = choice;
         }
 
-        const model = models[8];
-        console.log('MODELS: ',model);
+        // console.log('MODEL CHOSEN:', model);
+        // model = models[0];
+        // console.log('MODEL OF MODELS 0:', model);
 
         // show a progress notification while the AI call is in flight
         await vscode.window.withProgress(
@@ -221,7 +206,7 @@ export function activate(context: vscode.ExtensionContext) {
             await gameManager.onErrorsDiagnosed(uncachedErrors.length);
           },
         );
-      } catch (err) {``
+      } catch (err) {
         console.error('AI failed:', err);
         vscode.window.showErrorMessage('OtterDr Was Swept away by confusion.');
       } finally {
