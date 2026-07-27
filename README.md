@@ -88,11 +88,11 @@ Error messages and stack traces are often cryptic or poorly documented, leading 
 4. Open VS Code and run the extension in **Development Mode** (press `F5`)
 
 
-### **🔑 Initial Setup – OpenAI API Key**
+### **🔑 Initial Setup – API Key**
 
-OtterDr requires an OpenAI API Key to generate explanations and suggestions
+OtterDr requires an API Key of an AI of your choice to generate explanations and suggestions
 
-* **First Use**: The first time you click the *OtterDr button* in the Status Bar, you will be prompted to enter your key  
+* **First Use**: The first time you click the *🦦 OtterDr button* in the Status Bar on the lower righthand side of your VS Code window, you will be prompted to enter your key
 
 * **Secure Storage:** Once entered, your key is stored securely in VS Code's **SecretStorage**
 
