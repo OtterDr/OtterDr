@@ -18,10 +18,92 @@ let cachedTranslations: Record<string, OtterResponse> = {};
 function getErrorKey(error: ErrorFormat): string {
   return `${error.fileSource}::${error.code}::${error.message}::${error.errorContext}`;
 }
+
+//Storing the default model key in this variable
+const SAVED_MODEL_KEY = 'otterDr.selectedModelId';
+
+//Helper function used to fetch, validate, and select the default language model
+
+async function resolveLanguageModel(
+  context: vscode.ExtensionContext,
+  forceSelect: boolean = false,
+): Promise<vscode.LanguageModelChat | undefined> {
+  const models = await vscode.lm.selectChatModels({});
+
+  //Handles if no models are installed
+  if (models.length === 0) {
+    const action = await vscode.window.showErrorMessage(
+      'OtterDr needs a VS Code language model to work. Install one to get started.',
+      'Get GitHub Copilot',
+      'Browse Extensions',
+    );
+    if (action === 'Get GitHub Copilot') {
+      vscode.env.openExternal(
+        vscode.Uri.parse('vscode:extension/GitHub.copilot-chat'),
+      );
+    } else if (action === 'Browse Extensions') {
+      vscode.commands.executeCommand('workbench.extensions.search', 'AI');
+    }
+    return undefined;
+  }
+
+  //Check the stored preference if not forcing a new selection
+  if (!forceSelect) {
+    const savedModelId = context.globalState.get<string>(SAVED_MODEL_KEY);
+    if (savedModelId) {
+      const savedModel = models.find((m) => m.id === savedModelId);
+      if (savedModel) {
+        return savedModel;
+      }
+    }
+  }
+
+  //User selection / the default model selection if only one exists
+  if (models.length === 1) {
+    const singleModel = models[0];
+    await context.globalState.update(SAVED_MODEL_KEY, singleModel.id);
+    return singleModel;
+  }
+
+  //Dropdown of other models
+  const quickPickItems = models.map((m) => ({
+    label: m.name,
+    description: `${m.vendor} (${m.family})`,
+    model: m,
+  }));
+
+  const choice = await vscode.window.showQuickPick(quickPickItems, {
+    placeHolder: forceSelect
+      ? 'Select a new default AI model for OtterDr'
+      : 'Select the AI language model for OtterDr to use',
+  });
+
+  if (choice) {
+    await context.globalState.update(SAVED_MODEL_KEY, choice.model.id);
+    return choice.model;
+  }
+
+  return undefined;
+}
 export function activate(context: vscode.ExtensionContext) {
   console.log('🔴 OtterDr ACTIVATING!');
 
   const provider = new OtterViewProvider(context.extensionUri);
+
+  //Providing users with the option to change the default model
+  // Register a command so users can change model from the Command Palette (Ctrl+Shift+P / Cmd+Shift+P)
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('otterDr.changeModel', async () => {
+      const selectedModel = await resolveLanguageModel(context, true);
+
+      if (selectedModel) {
+        vscode.window.showInformationMessage(
+          `OtterDr active model changed to ${selectedModel.name}! 🦦`,
+        );
+      }
+    }),
+  );
 
   // GameManager owns all XP, unlock, and equip logic.
   // The callback forwards any state change to the sidebar without GameManager
@@ -127,52 +209,13 @@ export function activate(context: vscode.ExtensionContext) {
         }
 
         // request any available VS Code chat model (e.g. GitHub Copilot) — no API key needed
-        const models = await vscode.lm.selectChatModels({});
-        let model: any; //vscode.lm.ChatModel | undefined should be the types here.
-        console.log(
-          'Available models:',
-          models.map((m) => m.name),
-        );
-
-        if (models.length === 0) {
-          // no chat model installed — point the user at how to get one
-          const action = await vscode.window.showErrorMessage(
-            'OtterDr needs a VS Code language model to work. Install one to get started.',
-            'Get GitHub Copilot',
-            'Browse Extensions',
-          );
-          if (action === 'Get GitHub Copilot') {
-            vscode.env.openExternal(
-              vscode.Uri.parse('vscode:extension/GitHub.copilot-chat'),
-            );
-          } else if (action === 'Browse Extensions') {
-            vscode.commands.executeCommand('workbench.extensions.search', 'AI');
-          }
+        //Model selection call
+        const model = await resolveLanguageModel(context);
+        if (!model) {
           return;
         }
 
-        // Multiple models available — present a QuickPick menu to the user
-        if (models.length > 0) {
-          const quickPickItems = models.map((m) => ({
-            label: m.name,
-            description: `${m.vendor} (${m.family})`,
-            model: m,
-          }));
-
-          const choice = await vscode.window.showQuickPick(quickPickItems, {
-            placeHolder: 'Select the AI language model for OtterDr to use',
-          });
-
-          // If the user dismissed the dropdown without selecting, exit early
-          if (!choice) {
-            return;
-          }
-          model = choice;
-        }
-
-        // console.log('MODEL CHOSEN:', model);
-        // model = models[0];
-        // console.log('MODEL OF MODELS 0:', model);
+        console.log('Using model: ', model.name);
 
         // show a progress notification while the AI call is in flight
         await vscode.window.withProgress(
@@ -394,85 +437,6 @@ class OtterViewProvider implements vscode.WebviewViewProvider {
     const styleUri = webview.asWebviewUri(
       vscode.Uri.joinPath(this._extensionUri, 'webview', 'styles.css'),
     );
-
-    // // Commenting out older HTML as backup for reference
-
-    // return /*html*/ `
-    // <!DOCTYPE html>
-    //  <html lang="en">
-    //  <head>
-    //   <!-- Important: Content security policy should be set here for security -->
-    //   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource} data:; script-src 'nonce-${nonce}'; style-src ${webview.cspSource} 'unsafe-inline';">
-    //    <meta charset="UTF-8">
-    //    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    //    <style>
-    //       img {
-    //         height: auto;
-    //         cursor: pointer;
-    //       }
-    //     </style>
-    //  </head>
-    //  <body>
-    //    <div id="root"></div>
-    //    <img id="otter" src="${defaultImage}" alt="Otter image">
-    //    <!-- xp-count is updated via GAME_STATE_UPDATE messages from GameManager -->
-    //    <p id="xp-count" style="font-size:0.75rem; text-align:center; opacity:0.6; margin:4px 0 0;"></p>
-    //    <script nonce="${nonce}">
-    //       let currentState = 'default';
-    //       const img = document.getElementById("otter")
-    //       const defaultSrc = "${defaultImage}";
-    //       const happySrc = "${happyImage}";
-    //       const confusedSrc = "${confusedImage}";
-
-    //       img.addEventListener("click", () => {
-    //       //change to happy image
-    //       img.src= happySrc;
-    //       //after 2 seconds go back to confused or default
-    //       setTimeout(() => { img.src = currentState === 'confused' ? confusedSrc : defaultSrc}, 2000)});
-
-    //       const vscode = acquireVsCodeApi();
-
-    //       // signal to the extension host that the webview JS has finished loading
-    //       // and is ready to receive postMessage calls (e.g. GAME_STATE_UPDATE).
-    //       // Without this, state sent immediately after setting webview.html can
-    //       // arrive before the message listener is registered and gets silently dropped.
-    //       vscode.postMessage({ type: 'WEBVIEW_READY' });
-
-    //       window.addEventListener('message', event => {
-    //         const message = event.data;
-
-    //         // UPDATE_ERROR_COUNT — fired by errorListener whenever diagnostics change;
-    //         // switches the otter image between default and confused states
-    //         if (message.type === 'UPDATE_ERROR_COUNT') {
-    //           const count = message.count;
-    //           if (count > 0) {
-    //             currentState = 'confused';
-    //             img.src = confusedSrc;
-    //           } else {
-    //             currentState = 'default';
-    //             img.src = defaultSrc;
-    //           }
-    //         }
-
-    //         // GAME_STATE_UPDATE — fired by GameManager after every state change
-    //         // (new errors diagnosed, item unlocked, item equipped).
-    //         // state.diagnosedCount  → total errors translated, used to show XP progress
-    //         // state.unlockedItems   → array of item IDs the user has earned
-    //         // state.equippedItems   → map of slot → item ID currently worn
-    //         // cosmetic layers are rendered here once assets exist;
-    //         // empty assetPaths are skipped so missing art causes no visible breakage
-    //         if (message.type === 'GAME_STATE_UPDATE') {
-    //           const { state } = message;
-    //           const xpEl = document.getElementById('xp-count');
-    //           if (xpEl) {
-    //             xpEl.textContent = state.diagnosedCount + ' errors diagnosed';
-    //           }
-    //           // future: iterate state.equippedItems and show/hide cosmetic layers
-    //         }
-    //       });
-    //     </script>
-    //  </body>
-    //  </html> `;
 
     // For global.d.ts file; making the images global to be used in React (Look: "window.otterAssets")
     return `<!DOCTYPE html>

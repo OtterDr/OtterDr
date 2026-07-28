@@ -35,6 +35,10 @@
       {
         "command": "otterDr.openWebview",
         "title": "Explorer: Open OtterDr View"
+      },
+      {
+        "command": "otterDr.changeModel",
+        "title": "Change Default AI Model"
       }
     ]
   },
