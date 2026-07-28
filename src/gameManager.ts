@@ -30,6 +30,13 @@ export class GameManager {
     // opt this key into VS Code Settings Sync so the user's progress
     // follows them across machines when they have sync enabled
     context.globalState.setKeysForSync([STORAGE_KEY]);
+
+    // backfill any catalog items that should already be unlocked based on the
+    // current diagnosedCount but are missing from unlockedItems. This handles the
+    // case where new items are added to the catalog after the user has already
+    // earned enough XP to unlock them — without this, they would never unlock
+    // because checkMilestones only fires when a threshold is actively crossed.
+    this.backfillUnlocks();
   }
 
   // called by extension.ts immediately after activation to push the current
@@ -100,6 +107,34 @@ export class GameManager {
         !this.state.unlockedItems.includes(item.id)
       );
     });
+  }
+
+  // silently unlocks any catalog items whose threshold is already met but missing
+  // from unlockedItems — runs once in the constructor, synchronously, so the
+  // corrected state is available before sendInitialState() broadcasts it.
+  // No notifications are shown since these items were earned in a previous session.
+  private backfillUnlocks(): void {
+    const count = this.state.diagnosedCount;
+    const missing = ITEM_CATALOG.filter(item => {
+      const cond = item.unlockCondition;
+      return (
+        cond.type === 'diagnosedCount' &&
+        cond.threshold <= count &&
+        !this.state.unlockedItems.includes(item.id)
+      );
+    });
+
+    if (missing.length === 0) { return; }
+
+    // update state synchronously — save happens async but state is immediately usable
+    this.state = {
+      ...this.state,
+      unlockedItems: [...this.state.unlockedItems, ...missing.map(i => i.id)],
+    };
+
+    // persist in the background; failure here is non-critical since the next
+    // diagnosed error will trigger another save with the correct state
+    this.save().catch(err => console.error('OtterDr: backfill save failed', err));
   }
 
   // writes the current in-memory state to VS Code's persistent globalState storage

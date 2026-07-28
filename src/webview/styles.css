@@ -1,8 +1,13 @@
+/* styles.css — global styles for the OtterDr sidebar React webview.
+   VS Code injects its own CSS custom properties (--vscode-*) into every webview,
+   so these styles automatically adapt to the user's active color theme. */
 
 h1 {
+  /* match VS Code's editor font so headings feel native to the environment */
   font-family: var(--vscode-editor-font-family);
 }
 
+/* outer wrapper: centers the content and caps width so it stays readable at any sidebar width */
 .app {
   margin: 15px auto;
   max-width: 80rem;
@@ -13,9 +18,7 @@ h1 {
   gap: 1rem;
 }
 
+/* uses VS Code's built-in error color so it automatically matches the active theme */
 .app__error {
   color: var(--vscode-editorError-foreground);
 }
-/* body{
-  background-color: blueviolet;
-} */
