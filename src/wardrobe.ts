@@ -24,7 +24,7 @@ export function renderWardrobeHTML(webview: vscode.Webview, extensionUri: vscode
 
   // otter image shown in the live avatar preview column on the left
   const otterUri = webview.asWebviewUri(
-    vscode.Uri.joinPath(extensionUri, 'assets', 'emotes', 'default_image.png'),
+    vscode.Uri.joinPath(extensionUri, 'assets', 'otter', 'default_otter.png'),
   ).toString();
 
   // group catalog items by slot, preserving first-appearance order for section ordering

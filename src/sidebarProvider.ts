@@ -78,13 +78,13 @@ export class OtterViewProvider implements vscode.WebviewViewProvider {
 
     // resolve webview-safe URIs for the three otter emote images
     const defaultImage = webview.asWebviewUri(
-      vscode.Uri.joinPath(this._extensionUri, 'assets', 'emotes', 'default_image.png'),
+      vscode.Uri.joinPath(this._extensionUri, 'assets', 'otter', 'default_otter.png'),
     );
     const happyImage = webview.asWebviewUri(
-      vscode.Uri.joinPath(this._extensionUri, 'assets', 'emotes', 'happy_image.png'),
+      vscode.Uri.joinPath(this._extensionUri, 'assets', 'otter', 'happy_otter.png'),
     );
     const confusedImage = webview.asWebviewUri(
-      vscode.Uri.joinPath(this._extensionUri, 'assets', 'emotes', 'confused_image.png'),
+      vscode.Uri.joinPath(this._extensionUri, 'assets', 'otter', 'confused_otter.png'),
     );
 
     // the React bundle built from src/webview/index.tsx
