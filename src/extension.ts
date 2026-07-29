@@ -29,7 +29,10 @@ async function resolveLanguageModel(
   forceSelect: boolean = false,
 ): Promise<vscode.LanguageModelChat | undefined> {
   const models = await vscode.lm.selectChatModels({});
-
+  console.log(
+    'Available models:',
+    models.map((m) => m.name),
+  );
   //Handles if no models are installed
   if (models.length === 0) {
     const action = await vscode.window.showErrorMessage(
