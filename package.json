@@ -38,7 +38,7 @@
       },
       {
         "command": "otterDr.changeModel",
-        "title": "Explorer: Change OtterDr's Default AI Model"
+        "title": "OtterDr: Change Default AI Model"
       }
     ]
   },
