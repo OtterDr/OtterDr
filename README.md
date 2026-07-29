@@ -216,11 +216,12 @@ This project is licensed under the **MIT License**. See `LICENSE.md` for details
 - **Sofia Rodas** [🐙 GitHub](https://github.com/sofiso99) [🖇️ LinkedIn](https://www.linkedin.com/in/sofiarodas/) Creator
 - **Hyeyoon (Elaine) Sung** [🐙 GitHub](https://github.com/shy-blue-sky) [🖇️ LinkedIn](https://www.linkedin.com/in/hyeyoon-sung-a74378228/) Creator & Maintainer
 - **Stormi Stearns** [🐙 GitHub](https://github.com/stormi25-cell) [🖇️ LinkedIn](https://www.linkedin.com/in/essie-stearns-099912169/) Creator
-- **Katy Wells** [🐙 GitHub](https://github.com/katygus) [🖇️ LinkedIn](http://www.linkedin.com/in/katy-wells) Creator
+- **Katy Wells** [🐙 GitHub](https://github.com/katygus) [🖇️ LinkedIn](http://www.linkedin.com/in/katy-wells) Creator & Maintainer
 - **Delilah Lopez** [🐙 GitHub](https://github.com/DLopez43) [🖇️ LinkedIn](https://www.linkedin.com/in/delilah-lopez/) Creator & Maintainer
 
 ### Current Maintainers
 
+- **Katy Wells**
 - **Delilah Lopez**
 - **Hyeyoon (Elaine) Sung**
 - **Lawrenzo Lue** [🐙 GitHub](http://github.com/lawrenzo456/) [🖇️ LinkedIn](https://www.linkedin.com/in/lawrenzo-lue/) Maintainer
