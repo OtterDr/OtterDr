@@ -22,3 +22,57 @@ h1 {
 .app__error {
   color: var(--vscode-editorError-foreground);
 }
+
+
+h1 {
+  font-family: var(--vscode-editor-font-family);
+}
+
+.app {
+  margin: 15px auto;
+  max-width: 80rem;
+}
+
+.app__actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.app__error {
+  color: var(--vscode-editorError-foreground);
+}
+/* body{
+  background-color: blueviolet;
+  cursor: url('../../assets/heart.png'), auto;
+
+} */
+
+.heart {
+  position: absolute;
+  top: 40%;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, -50%);
+  animation-name: heart-float;
+  animation-timing-function: ease-out;
+  animation-fill-mode: forwards;
+}
+
+@keyframes heart-float {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.6);
+  }
+  15% {
+    opacity: 1;
+    transform: translate(-50%, -80%) scale(1);
+  }
+  50% {
+    transform: translate(calc(-50% + 10px), -220%) scale(1.05);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% - 10px), -380%) scale(0.9);
+  }
+}
+

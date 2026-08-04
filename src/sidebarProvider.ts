@@ -65,12 +65,18 @@ export class OtterViewProvider implements vscode.WebviewViewProvider {
   // always updates _latestState so late-joining webviews get fresh data.
   public sendStateToWebview(state: GameState): void {
     this._latestState = state;
-    this._view?.webview.postMessage({ type: 'GAME_STATE_UPDATE', payload: state });
+    this._view?.webview.postMessage({
+      type: 'GAME_STATE_UPDATE',
+      payload: state,
+    });
   }
 
   // pushes the current active-file error count to the webview to trigger the otter's mood change
   public sendErrorCountToWebview(count: number): void {
-    this._view?.webview.postMessage({ type: 'UPDATE_ERROR_COUNT', payload: count });
+    this._view?.webview.postMessage({
+      type: 'UPDATE_ERROR_COUNT',
+      payload: count,
+    });
   }
 
   private _getHtmlForWebview(webview: vscode.Webview): string {
@@ -78,18 +84,45 @@ export class OtterViewProvider implements vscode.WebviewViewProvider {
 
     // resolve webview-safe URIs for the three otter emote images
     const defaultImage = webview.asWebviewUri(
-      vscode.Uri.joinPath(this._extensionUri, 'assets', 'otter', 'default_otter.png'),
+      vscode.Uri.joinPath(
+        this._extensionUri,
+        'assets',
+        'otter',
+        'default_otter.png',
+      ),
     );
     const happyImage = webview.asWebviewUri(
-      vscode.Uri.joinPath(this._extensionUri, 'assets', 'otter', 'happy_otter.png'),
+      vscode.Uri.joinPath(
+        this._extensionUri,
+        'assets',
+        'otter',
+        'happy_otter.png',
+      ),
     );
     const confusedImage = webview.asWebviewUri(
-      vscode.Uri.joinPath(this._extensionUri, 'assets', 'otter', 'confused_otter.png'),
+      vscode.Uri.joinPath(
+        this._extensionUri,
+        'assets',
+        'otter',
+        'confused_otter.png',
+      ),
+    );
+
+    const starImage = webview.asWebviewUri(
+      vscode.Uri.joinPath(this._extensionUri, 'assets', 'emotes','star.png'),
+    );
+    const heartImage = webview.asWebviewUri(
+      vscode.Uri.joinPath(this._extensionUri, 'assets','emotes', 'heart.png'),
     );
 
     // the React bundle built from src/webview/index.tsx
     const scriptUri = webview.asWebviewUri(
-      vscode.Uri.joinPath(this._extensionUri, 'dist', 'webview', 'webview.bundle.js'),
+      vscode.Uri.joinPath(
+        this._extensionUri,
+        'dist',
+        'webview',
+        'webview.bundle.js',
+      ),
     );
 
     // build background URI map — baked into window.otterAssets so App.tsx can resolve
@@ -97,9 +130,9 @@ export class OtterViewProvider implements vscode.WebviewViewProvider {
     const bgUriMap: Record<string, string> = {};
     for (const item of ITEM_CATALOG) {
       if (item.slot === 'backgrounds' && item.assetPath) {
-        bgUriMap[item.id] = webview.asWebviewUri(
-          vscode.Uri.joinPath(this._extensionUri, item.assetPath),
-        ).toString();
+        bgUriMap[item.id] = webview
+          .asWebviewUri(vscode.Uri.joinPath(this._extensionUri, item.assetPath))
+          .toString();
       }
     }
 
@@ -115,16 +148,24 @@ export class OtterViewProvider implements vscode.WebviewViewProvider {
     // build overlay data map for cosmetics that layer on top of the otter (hats, glasses, accessories).
     // each entry includes the webview-safe URI plus optional CSS size/position values from the catalog,
     // so standalone cropped PNGs can be sized and placed without needing to redo the art as same-canvas.
-    const overlayDataMap: Record<string, { uri: string; width: string; top: string; left: string }> = {};
+    const overlayDataMap: Record<
+      string,
+      { uri: string; width: string; top: string; left: string }
+    > = {};
     for (const item of ITEM_CATALOG) {
-      if (['hats', 'glasses', 'accessories'].includes(item.slot) && item.assetPath) {
+      if (
+        ['hats', 'glasses', 'accessories'].includes(item.slot) &&
+        item.assetPath
+      ) {
         overlayDataMap[item.id] = {
-          uri: webview.asWebviewUri(
-            vscode.Uri.joinPath(this._extensionUri, item.assetPath),
-          ).toString(),
+          uri: webview
+            .asWebviewUri(
+              vscode.Uri.joinPath(this._extensionUri, item.assetPath),
+            )
+            .toString(),
           width: item.overlayWidth ?? 'auto',
-          top:   item.overlayTop   ?? '0',
-          left:  item.overlayLeft  ?? '0',
+          top: item.overlayTop ?? '0',
+          left: item.overlayLeft ?? '0',
         };
       }
     }
@@ -150,6 +191,8 @@ export class OtterViewProvider implements vscode.WebviewViewProvider {
           defaultImage: "${defaultImage}",
           happyImage: "${happyImage}",
           confusedImage: "${confusedImage}",
+          starImage:"${starImage}",
+          heartImage:"${heartImage}",
           bgUris: ${JSON.stringify(bgUriMap)},
           colorFilters: ${JSON.stringify(colorFilterMap)},
           overlayData: ${JSON.stringify(overlayDataMap)}

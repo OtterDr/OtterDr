@@ -7,6 +7,15 @@ import './styles.css';
 
 export interface IAppProps {}
 
+interface EmotionsFormat {
+  id: number;
+  offsetX: number; // horizontal drift target
+  size: number; // font size is in px
+  delay: number; // delay in ms
+  duration: number; //duration in ms
+  src: string; // or we could use emojis to replace the happy state animation
+}
+
 // UPPER_CASE satisfies the project linting rule for variable names;
 // React still treats it as a component because it starts with a capital letter.
 export const APP: React.FunctionComponent<IAppProps> = ({}: React.PropsWithChildren<IAppProps>) => {
@@ -14,6 +23,11 @@ export const APP: React.FunctionComponent<IAppProps> = ({}: React.PropsWithChild
   const [errorCount, setErrorCount] = React.useState<number>(0);
   // mood controls which otter image is shown; 'happy' is a temporary click reaction
   const [mood, setMood] = React.useState<'default' | 'happy' | 'confused'>('default');
+  //Otter reactions array when pressed onClick
+  const [emotions, setEmotions] = React.useState<EmotionsFormat[]>([]);
+  //it is ref because it would not cause re render and it is just a counter not need for the user to interact with it 
+  const reactEmotionsId = React.useRef(0); 
+
   // errorText is the total lifetime diagnosed count shown beneath the otter
   const [errorText, setErrorText] = React.useState<number>(0);
   // equippedBgId is the catalog item ID for the currently equipped background, or null for none
@@ -77,6 +91,7 @@ export const APP: React.FunctionComponent<IAppProps> = ({}: React.PropsWithChild
   // clicking the otter briefly shows the happy image, then reverts to the current mood after 2s
   const handleOtterClick = () => {
     setMood('happy');
+    spawnHearts();
     setTimeout(() => {
       setMood(errorCount > 0 ? 'confused' : 'default');
     }, 2000);
@@ -101,6 +116,31 @@ export const APP: React.FunctionComponent<IAppProps> = ({}: React.PropsWithChild
     .filter((id): id is string => !!id && !!assets.overlayData[id])
     .map(id => assets.overlayData[id]);
 
+  const spawnHearts = () => {
+    const count = 5; // How many will spawn at a time
+
+    const assets = (window as any).otterAssets; //Added img in extension to make it global
+    const reactEmotions = [assets.heartImage, assets.starImage]; //Alternate between hearts and stars imgs
+
+    const reactions: EmotionsFormat[] = Array.from({ length: count }, () => ({
+      id: reactEmotionsId.current++, //this will later be used to delete specific id element using filter
+      offsetX: Math.random() * 100 - 50, // -50px to +50px drift (moves along the x axis after using onClick)
+      size: 14 + Math.random() * 14, // 14px–28px, varied sizes
+      delay: Math.random() * 400, // up to 400ms apart, so not all show at the same time
+      duration: 1000 + Math.random() * 600, //to make it look like burst
+      src: reactEmotions[Math.floor(Math.random() * reactEmotions.length)], //[0,2) for the index
+    }));
+
+    setEmotions((prev) => [...prev, ...reactions]);
+
+    // remove each heart after its own delay + duration finishes
+    reactions.forEach((element) => {
+      setTimeout(() => {
+        setEmotions((prev) => prev.filter((h) => h.id !== element.id));
+      }, element.delay + element.duration);
+    });
+  };
+ 
   return (
     <div className="app">
       {/* fixed-height container gives background, otter, and overlays a shared coordinate space */}
@@ -123,6 +163,22 @@ export const APP: React.FunctionComponent<IAppProps> = ({}: React.PropsWithChild
             onClick={handleOtterClick}
             alt="Otter"
           />
+          {/* hearts and stars spawned on click */}
+          {emotions.map((particle) => (
+          <img
+            key={particle.id}
+            src={particle.src}
+            className='heart'
+            alt=''
+            style={{
+              left: `calc(50% + ${particle.offsetX}px)`,
+              width: `${particle.size}px`,
+              height: `${particle.size}px`,
+              animationDelay: `${particle.delay}ms`,
+              animationDuration: `${particle.duration}ms`,
+            }}
+          />
+        ))}
           {/* overlay cosmetics — sized and positioned using catalog metadata */}
           {overlayItems.map((overlay, i) => (
             <img
