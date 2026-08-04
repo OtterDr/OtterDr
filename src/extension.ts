@@ -36,16 +36,13 @@ async function resolveLanguageModel(
   //Handles if no models are installed
   if (models.length === 0) {
     const action = await vscode.window.showErrorMessage(
-      'OtterDr needs a VS Code language model to work. Install one to get started.',
+      'OtterDr currently uses GitHub Copilot to work. Please install the extension to get started.',
       'Get GitHub Copilot',
-      'Browse Extensions',
     );
     if (action === 'Get GitHub Copilot') {
       vscode.env.openExternal(
         vscode.Uri.parse('vscode:extension/GitHub.copilot-chat'),
       );
-    } else if (action === 'Browse Extensions') {
-      vscode.commands.executeCommand('workbench.extensions.search', 'AI');
     }
     return undefined;
   }
