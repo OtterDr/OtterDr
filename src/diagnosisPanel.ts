@@ -17,6 +17,9 @@ let aiInProgress = false;
 // regardless of which other errors are selected alongside it in the same batch
 let cachedTranslations: Record<string, OtterResponse> = {};
 
+//Keep tracks of the ai responses that will be sent in postMessages to render
+let pendingResults: OtterResponse[] | null = null;
+
 // stable cache key: excludes selectedText (varies with highlight length) but includes
 // errorContext so the cache busts naturally when the surrounding code changes
 function getErrorKey(error: ErrorFormat): string {
@@ -24,7 +27,9 @@ function getErrorKey(error: ErrorFormat): string {
 }
 
 // returns the existing panel (revealing it if hidden) or creates a new one
-function getOrCreatePanel(context: vscode.ExtensionContext): vscode.WebviewPanel {
+function getOrCreatePanel(
+  context: vscode.ExtensionContext,
+): vscode.WebviewPanel {
   if (currentPanel) {
     currentPanel.reveal(vscode.ViewColumn.Two);
   } else {
@@ -37,31 +42,44 @@ function getOrCreatePanel(context: vscode.ExtensionContext): vscode.WebviewPanel
         localResourceRoots: [context.extensionUri],
       },
     );
+
+    currentPanel.webview.html = renderHTML(
+      currentPanel.webview,
+      context.extensionUri,
+    );
+
+    currentPanel.webview.onDidReceiveMessage((message) => {
+      if (message.type === 'AI_RENDER_READY') {
+        if (aiInProgress) {
+          currentPanel?.webview.postMessage({ type: 'LOADING_CONTENT' });
+        } else if (pendingResults) {
+          currentPanel?.webview.postMessage({
+            type: 'AI_RESPONSE_UPDATE',
+            payload: pendingResults,
+          });
+        }
+      }
+    });
     // clear the reference when the user closes the panel so a fresh one is created next time
-    currentPanel.onDidDispose(() => { currentPanel = undefined; }, null, context.subscriptions);
+    currentPanel.onDidDispose(
+      () => {
+        currentPanel = undefined;
+      },
+      null,
+      context.subscriptions,
+    );
   }
   return currentPanel;
 }
 
 // renders one diagnosis card per AI response; adds numbered headings for multi-error batches
-function renderHTML(webview: vscode.Webview, aiResponses: OtterResponse[]): string {
+function renderHTML(webview: vscode.Webview, extensionUri: vscode.Uri): string {
   const nonce = getNonce();
 
-  const cards = aiResponses.map((aiResponse, i) => `
-    <div class="error-card">
-      ${aiResponses.length > 1
-        ? `<h2>Error ${i + 1} of ${aiResponses.length} 🦦</h2>`
-        : `<h2>OtterDr says 🦦</h2>`}
-      <h3>What happened:</h3>
-      <p>${encode(aiResponse.whatHappened)}</p>
-      <h3>Next Steps 👣:</h3>
-      <ol>
-        ${aiResponse.nextSteps.map((step: string) => `<li>${encode(step)}</li>`).join('')}
-      </ol>
-      <h3>Otter thoughts 💭:</h3>
-      <p>${encode(aiResponse.otterThoughts)}</p>
-    </div>
-  `).join('<hr>');
+  //Converting the React Panel for Ai Responses into a Js file to attached it to the html
+  const aiScript = webview.asWebviewUri(
+    vscode.Uri.joinPath(extensionUri, 'dist', 'webview', 'panel.bundle.js'),
+  );
 
   return `<!DOCTYPE html>
     <html lang="en">
@@ -74,7 +92,11 @@ function renderHTML(webview: vscode.Webview, aiResponses: OtterResponse[]): stri
         hr { border: none; border-top: 1px solid #444; margin: 1.5rem 0; }
       </style>
     </head>
-    <body>${cards}</body>
+    <body>
+      <div id='root'></div>
+      <script nonce="${nonce}">window.tsvscode = acquireVsCodeApi();</script>
+      <script nonce="${nonce}" src="${aiScript}"></script>
+    </body>
     </html>`;
 }
 
@@ -86,7 +108,9 @@ export async function openDiagnosisPanel(
 ): Promise<void> {
   // prevent overlapping AI calls — the otter can only dive once at a time
   if (aiInProgress) {
-    vscode.window.showInformationMessage('OtterDr is already fishing for a solution. 🦦');
+    vscode.window.showInformationMessage(
+      'OtterDr is already fishing for a solution. 🦦',
+    );
     return;
   }
 
@@ -120,13 +144,20 @@ export async function openDiagnosisPanel(
       // every error was already cached — open the panel immediately with no AI call
       console.log('Using Cached Translation');
       const panel = getOrCreatePanel(context);
-      panel.webview.html = renderHTML(panel.webview, results);
+      pendingResults = results;
+      panel.webview.postMessage({
+        type: 'AI_RESPONSE_UPDATE',
+        payload: pendingResults,
+      });
       return;
     }
 
     // request any installed VS Code chat model (e.g. GitHub Copilot) — no API key needed
     const models = await vscode.lm.selectChatModels({});
-    console.log('Available models:', models.map((m) => m.name));
+    console.log(
+      'Available models:',
+      models.map((m) => m.name),
+    );
 
     if (models.length === 0) {
       // no chat model installed — guide the user to get one
@@ -136,7 +167,9 @@ export async function openDiagnosisPanel(
         'Browse Extensions',
       );
       if (action === 'Get GitHub Copilot') {
-        vscode.env.openExternal(vscode.Uri.parse('vscode:extension/GitHub.copilot-chat'));
+        vscode.env.openExternal(
+          vscode.Uri.parse('vscode:extension/GitHub.copilot-chat'),
+        );
       } else if (action === 'Browse Extensions') {
         vscode.commands.executeCommand('workbench.extensions.search', 'AI');
       }
@@ -153,8 +186,14 @@ export async function openDiagnosisPanel(
         cancellable: false,
       },
       async () => {
+        const panel = getOrCreatePanel(context);
+        panel.webview.postMessage({ type: 'LOADING_CONTENT' });
+
         // only send the uncached errors to the AI
-        const aiResponses = await otterTranslation(JSON.stringify(uncachedErrors), model);
+        const aiResponses = await otterTranslation(
+          JSON.stringify(uncachedErrors),
+          model,
+        );
 
         // cache each new response and slot it back into the correct position
         uncachedIndices.forEach((originalIdx, responseIdx) => {
@@ -163,9 +202,13 @@ export async function openDiagnosisPanel(
           results[originalIdx] = aiResponses[responseIdx];
         });
 
-        const panel = getOrCreatePanel(context);
-        panel.webview.html = 'Hold your breath, OtterDr is taking a deep dive...🤿';
-        panel.webview.html = renderHTML(panel.webview, results);
+        // render only after all responses are ready
+
+        pendingResults = results;
+        panel.webview.postMessage({
+          type: 'AI_RESPONSE_UPDATE',
+          payload: pendingResults,
+        });
 
         // only award XP for errors that required a real AI call — cached hits don't count
         await onDiagnosed(uncachedErrors.length);
