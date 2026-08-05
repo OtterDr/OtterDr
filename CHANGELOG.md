@@ -7,7 +7,7 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ### **V0.1.0 \- July 29, 2026**
 
-- Support for additional LLMs 
+- Support for Copilot
 - Multiple error selection
 - Error diagnosis count tracking
 
