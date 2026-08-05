@@ -79,21 +79,13 @@ Error messages and stack traces are often cryptic or poorly documented, leading 
 
 4. Open VS Code and run the extension in **Development Mode** (press `F5`)
 
-### **🔑 Initial Setup – API Key**
+### **🔑 Initial Setup **
 
-OtterDr requires an API Key for the AI provider of your choice to generate explanations and suggestions
+**V0.1.0 \- July 29, 2026** OtterDr no longer requires an API Key, and instead now bases its explanations on VS Code's Copilot extension
 
-- **First Use**: The first time you click the **🦦 OtterDr button** in the Status Bar on the lower righthand side of your VS Code window, you will be prompted to enter your key
+- **First Use**: The first time you click the **🦦 OtterDr button** in the Status Bar on the lower righthand side of your VS Code window, you will be taken to the VS Code Copilot extension page
 
-- **Secure Storage:** Once entered, your key is stored securely in VS Code's **SecretStorage**
-
-### **Manage Your API Key**
-
-If you need to change or remove your key later, use the Command Palette (Cmd/Ctrl \+ Shift \+ P):
-
-- **✏️ Update Key:** Search for `OtterDr: Update API Key`
-
-- **🗑️ Delete Key:** Search for `OtterDr: Delete API Key`
+- **Setup:** Once you download and enable Copilot, OtterDr is ready to go!
 
 ## **🧪 Usage Guide**
 
@@ -166,7 +158,8 @@ We ❤️ contributions\!
 | Inline error selection                                     | ✅     |
 | AI explanation panel                                       | ✅     |
 | Multiple error selection                                   | ✅     |
-| Support for additional LLMs                                | ✅     |
+| Streamlined Copilot support                                | ✅     |
+| Support for additional LLMs                                | ⏳     |
 | Gamification features (Level up)                           | ⏳     |
 | Unlocking skins or designs for otter based on level        | ⏳     |
 | Additional interaction choices with otter (Play, Feed etc) | 🙏🏻     |
@@ -181,7 +174,9 @@ We ❤️ contributions\!
 
 #### **V0.1.0 \- July 29, 2026**
 
-- Support for additional LLMs (You can now choose your own AI provider, instead of being tied to OpenAI!)
+- Supports Copilot
+
+   Instead of being required to input an OpenAI API key, users can now simply launch OtterDr by enabling Copilot on VS Code
 
 - Multiple error selection
 
@@ -241,7 +236,7 @@ This project is licensed under the **MIT License**. See `LICENSE.md` for details
  No — it explains errors so _you_ learn how to fix them.
 
 **Is my code stored anywhere?**  
- No. Code snippets are only sent to OpenAI for analysis and are not saved by the extension.
+ No. Code snippets are only sent to AI for analysis and are not saved by the extension.
 
 ---
 
