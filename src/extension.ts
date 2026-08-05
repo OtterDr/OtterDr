@@ -18,15 +18,99 @@ let cachedTranslations: Record<string, OtterResponse> = {};
 function getErrorKey(error: ErrorFormat): string {
   return `${error.fileSource}::${error.code}::${error.message}::${error.errorContext}`;
 }
+
+//Storing the default model key in this variable
+const SAVED_MODEL_KEY = 'otterDr.selectedModelId';
+
+//Helper function used to fetch, validate, and select the default language model
+
+async function resolveLanguageModel(
+  context: vscode.ExtensionContext,
+  forceSelect: boolean = false,
+): Promise<vscode.LanguageModelChat | undefined> {
+  const models = await vscode.lm.selectChatModels({});
+  console.log(
+    'Available models:',
+    models.map((m) => m.name),
+  );
+  //Handles if no models are installed
+  if (models.length === 0) {
+    const action = await vscode.window.showErrorMessage(
+      'OtterDr currently uses GitHub Copilot to work. Please install the extension to get started.',
+      'Get GitHub Copilot',
+    );
+    if (action === 'Get GitHub Copilot') {
+      vscode.env.openExternal(
+        vscode.Uri.parse('vscode:extension/GitHub.copilot-chat'),
+      );
+    }
+    return undefined;
+  }
+
+  //Check the stored preference if not forcing a new selection
+  if (!forceSelect) {
+    const savedModelId = context.globalState.get<string>(SAVED_MODEL_KEY);
+    if (savedModelId) {
+      const savedModel = models.find((m) => m.id === savedModelId);
+      if (savedModel) {
+        return savedModel;
+      }
+    }
+  }
+
+  //User selection / the default model selection if only one exists
+  if (models.length === 1) {
+    const singleModel = models[0];
+    await context.globalState.update(SAVED_MODEL_KEY, singleModel.id);
+    return singleModel;
+  }
+
+  //Dropdown of other models
+  const quickPickItems = models.map((m) => ({
+    label: m.name,
+    description: `${m.vendor} (${m.family})`,
+    model: m,
+  }));
+
+  const choice = await vscode.window.showQuickPick(quickPickItems, {
+    placeHolder: forceSelect
+      ? 'Select a new default AI model for OtterDr'
+      : 'Select the AI language model for OtterDr to use',
+  });
+
+  if (choice) {
+    await context.globalState.update(SAVED_MODEL_KEY, choice.model.id);
+    return choice.model;
+  }
+
+  return undefined;
+}
 export function activate(context: vscode.ExtensionContext) {
   console.log('🔴 OtterDr ACTIVATING!');
 
   const provider = new OtterViewProvider(context.extensionUri);
 
+  //Providing users with the option to change the default model
+  // Register a command so users can change model from the Command Palette (Ctrl+Shift+P / Cmd+Shift+P)
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('otterDr.changeModel', async () => {
+      const selectedModel = await resolveLanguageModel(context, true);
+
+      if (selectedModel) {
+        vscode.window.showInformationMessage(
+          `OtterDr active model changed to ${selectedModel.name}! 🦦`,
+        );
+      }
+    }),
+  );
+
   // GameManager owns all XP, unlock, and equip logic.
   // The callback forwards any state change to the sidebar without GameManager
   // needing a direct reference to OtterViewProvider (avoids circular imports).
-  const gameManager = new GameManager(context, (state) => provider.sendStateToWebview(state));
+  const gameManager = new GameManager(context, (state) =>
+    provider.sendStateToWebview(state),
+  );
 
   // route equip actions from the sidebar wardrobe UI through GameManager so
   // they are validated, persisted, and broadcast back as a single state update
@@ -39,13 +123,12 @@ export function activate(context: vscode.ExtensionContext) {
   // Returns the existing panel if open, otherwise creates a new split-editor panel
   const getOrCreatePanel = () => {
     if (currentPanel) {
-    
       currentPanel.reveal(vscode.ViewColumn.Two);
     } else {
       currentPanel = vscode.window.createWebviewPanel(
-        'webview-id', 
-        'OtterDr Diagnosis 🦦', 
-        vscode.ViewColumn.Two, 
+        'webview-id',
+        'OtterDr Diagnosis 🦦',
+        vscode.ViewColumn.Two,
         {
           enableScripts: true, //Enable Javascript/React in the webview
           localResourceRoots: [context.extensionUri],
@@ -127,20 +210,22 @@ export function activate(context: vscode.ExtensionContext) {
 
         // request any available VS Code chat model (e.g. GitHub Copilot) — no API key needed
         const models = await vscode.lm.selectChatModels({});
-        console.log('Available models:', models.map(m => m.name));
+        console.log(
+          'Available models:',
+          models.map((m) => m.name),
+        );
+        //Handles if no models are installed
         if (models.length === 0) {
-          // no chat model installed — point the user at how to get one
           const action = await vscode.window.showErrorMessage(
-            'OtterDr needs a VS Code language model to work. Install one to get started.',
+            'OtterDr currently uses GitHub Copilot to work. Please install the extension to get started.',
             'Get GitHub Copilot',
-            'Browse Extensions'
           );
           if (action === 'Get GitHub Copilot') {
-            vscode.env.openExternal(vscode.Uri.parse('vscode:extension/GitHub.copilot-chat'));
-          } else if (action === 'Browse Extensions') {
-            vscode.commands.executeCommand('workbench.extensions.search', 'AI');
+            vscode.env.openExternal(
+              vscode.Uri.parse('vscode:extension/GitHub.copilot-chat'),
+            );
           }
-          return;
+          return undefined;
         }
 
         const model = models[0];
@@ -203,18 +288,21 @@ export function activate(context: vscode.ExtensionContext) {
       // Whatever is sent to backend should be in a JSON format
     }),
   );
-
 }
 
 // renders one diagnosis card per error; shows numbered headings when more than one is present
 function renderHTML(webview: vscode.Webview, aiResponses: OtterResponse[]) {
   const nonce = getNonce();
 
-  const cards = aiResponses.map((aiResponse, i) => `
+  const cards = aiResponses
+    .map(
+      (aiResponse, i) => `
     <div class="error-card">
-      ${aiResponses.length > 1
-        ? `<h2>Error ${i + 1} of ${aiResponses.length} 🦦</h2>`
-        : `<h2>OtterDr says 🦦</h2>`}
+      ${
+        aiResponses.length > 1
+          ? `<h2>Error ${i + 1} of ${aiResponses.length} 🦦</h2>`
+          : `<h2>OtterDr says 🦦</h2>`
+      }
       <h3>What happened:</h3>
       <p>${encode(aiResponse.whatHappened)}</p>
       <h3>Next Steps 👣:</h3>
@@ -224,7 +312,9 @@ function renderHTML(webview: vscode.Webview, aiResponses: OtterResponse[]) {
       <h3>Otter thoughts 💭:</h3>
       <p>${encode(aiResponse.otterThoughts)}</p>
     </div>
-  `).join('<hr>');
+  `,
+    )
+    .join('<hr>');
 
   return `<!DOCTYPE html>
     <html lang="en">
@@ -415,5 +505,3 @@ function getNonce() {
 }
 // this method is called when your extension is deactivated
 export function deactivate() {}
-
-
