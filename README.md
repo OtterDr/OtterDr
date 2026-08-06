@@ -79,9 +79,9 @@ Error messages and stack traces are often cryptic or poorly documented, leading 
 
 4. Open VS Code and run the extension in **Development Mode** (press `F5`)
 
-### **🔑 Initial Setup **
+###  **🔑 Initial Setup**
 
-**V0.1.0 \- July 29, 2026** OtterDr no longer requires an API Key, and instead now bases its explanations on VS Code's Copilot extension
+**V0.1.0 \- July 29, 2026** : OtterDr no longer requires an API Key, and instead now bases its explanations on VS Code's Copilot extension
 
 - **First Use**: The first time you click the **🦦 OtterDr button** in the Status Bar on the lower righthand side of your VS Code window, you will be taken to the VS Code Copilot extension page
 
