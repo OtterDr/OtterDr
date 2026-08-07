@@ -4,7 +4,7 @@
   "publisher": "OtterDr",
   "description": "Debugging made otterly simple",
   "icon": "assets/otter-icon.png",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "packageManager": "npm@10.8.2",
   "repository": {
     "url": "https://github.com/OtterDr/OtterDr.git",
