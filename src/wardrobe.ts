@@ -22,6 +22,23 @@ export function renderWardrobeHTML(webview: vscode.Webview, extensionUri: vscode
     }
   }
 
+  // build overlay position map for hats/glasses/accessories — baked into wardrobe JS
+  // so the preview can show them without calling back to the extension host
+  const overlayDataMap: Record<string, { uri: string; width: string; height: string; top: string; left: string }> = {};
+  for (const item of ITEM_CATALOG) {
+    if (['hats', 'glasses', 'accessories'].includes(item.slot) && item.assetPath) {
+      // prefer the default-emote offset so the wardrobe preview matches the sidebar exactly
+      const defaultOffset = item.overlayEmoteOffsets?.default;
+      overlayDataMap[item.id] = {
+        uri:    webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, item.assetPath)).toString(),
+        width:  item.overlayWidth        ?? 'auto',
+        height: item.overlayHeight       ?? 'auto',
+        top:    defaultOffset?.top       ?? item.overlayTop  ?? '0',
+        left:   defaultOffset?.left      ?? item.overlayLeft ?? '0',
+      };
+    }
+  }
+
   // otter image shown in the live avatar preview column on the left
   const otterUri = webview.asWebviewUri(
     vscode.Uri.joinPath(extensionUri, 'assets', 'otter', 'default_otter.png'),
@@ -149,9 +166,14 @@ export function renderWardrobeHTML(webview: vscode.Webview, extensionUri: vscode
       /* ── left: avatar preview ── */
       .preview-col { border-right:1px solid var(--border); display:flex; flex-direction:column; align-items:center; padding:22px 18px 18px; gap:13px; }
       .preview-label { font-size:10px; text-transform:uppercase; letter-spacing:0.1em; color:var(--muted); font-weight:700; align-self:flex-start; }
-      .avatar-frame { width:190px; height:190px; border-radius:13px; border:1px solid var(--border); overflow:hidden; position:relative; display:flex; align-items:flex-end; justify-content:center; background:var(--card); flex-shrink:0; }
-      #bg-preview { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:none; }
-      #otter-preview { width:80%; height:auto; position:relative; z-index:1; filter:drop-shadow(0 3px 10px rgba(0,0,0,0.4)); }
+      /* preview scene mirrors the sidebar layout exactly:
+         background fills the frame anchored to bottom, otter sits at the bottom edge,
+         inline-block wrapper keeps overlay percentages relative to the otter image */
+      .avatar-frame { width:100%; height:160px; border-radius:10px; border:1px solid var(--border); position:relative; display:flex; align-items:flex-end; justify-content:center; background:var(--card); overflow:visible; flex-shrink:0; }
+      #bg-preview { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:bottom center; border-radius:10px; display:none; }
+      #otter-wrap { position:relative; display:inline-block; z-index:1; }
+      #otter-preview { height:110px; width:auto; display:block; }
+      #otter-wrap .overlay-img { position:absolute; pointer-events:none; }
       .equipped-label { font-size:11px; color:var(--muted); text-align:center; }
       .equipped-label strong { color:var(--text); font-weight:500; }
       .unequip-btn { font-size:11px; color:var(--muted); background:none; border:1px solid var(--border); padding:5px 14px; border-radius:6px; cursor:pointer; transition:border-color 0.15s,color 0.15s; }
@@ -204,7 +226,9 @@ export function renderWardrobeHTML(webview: vscode.Webview, extensionUri: vscode
         <span class="preview-label">Preview</span>
         <div class="avatar-frame">
           <img id="bg-preview" src="" alt="Background">
-          <img id="otter-preview" src="${otterUri}" alt="OtterDr">
+          <div id="otter-wrap">
+            <img id="otter-preview" src="${otterUri}" alt="OtterDr">
+          </div>
         </div>
         <div class="equipped-label" id="equipped-label">Background: <strong>None</strong></div>
         <button class="unequip-btn" id="unequip-btn" style="display:none" onclick="unequip()">Remove background</button>
@@ -215,10 +239,35 @@ export function renderWardrobeHTML(webview: vscode.Webview, extensionUri: vscode
       </section>
     </main>
     <script nonce="${nonce}">
-      // asset URIs baked in at HTML generation time — maps item ID to its webview-safe image URL
-      const ASSET_URIS = ${JSON.stringify(assetUriMap)};
+      const ASSET_URIS   = ${JSON.stringify(assetUriMap)};
+      const OVERLAY_DATA = ${JSON.stringify(overlayDataMap)};
+      const OVERLAY_SLOTS = ['hats', 'glasses', 'accessories'];
 
       const vscode = acquireVsCodeApi();
+
+      // tracks the currently equipped item per slot so optimistic clicks can update
+      // the preview immediately without waiting for a GAME_STATE_UPDATE round-trip
+      var currentEquipped = {};
+
+      function updateOverlays() {
+        var wrap = document.getElementById('otter-wrap');
+        // remove any previously rendered overlays
+        wrap.querySelectorAll('.overlay-img').forEach(function(el) { el.remove(); });
+        OVERLAY_SLOTS.forEach(function(slot) {
+          var id = currentEquipped[slot];
+          if (id && OVERLAY_DATA[id]) {
+            var d = OVERLAY_DATA[id];
+            var img = document.createElement('img');
+            img.className = 'overlay-img';
+            img.src = d.uri;
+            img.style.top    = d.top;
+            img.style.left   = d.left;
+            img.style.width  = d.width;
+            img.style.height = d.height || 'auto';
+            wrap.appendChild(img);
+          }
+        });
+      }
 
       // apply a full game state snapshot — called on initial load and after every broadcast.
       // toggles 'unlocked' and 'equipped' classes on all cards so CSS handles the visual state.
@@ -255,6 +304,10 @@ export function renderWardrobeHTML(webview: vscode.Webview, extensionUri: vscode
             otterEl.style.filter = 'none';
           }
         }
+
+        // sync overlay items (hats, glasses, accessories) onto the preview otter
+        currentEquipped = Object.assign({}, state.equippedItems);
+        updateOverlays();
       }
 
       // update the avatar preview to show the equipped background, or hide it when null
@@ -293,16 +346,19 @@ export function renderWardrobeHTML(webview: vscode.Webview, extensionUri: vscode
           });
 
           if (isEquipped) {
-            // clicking the equipped item again unequips it (toggle)
+            currentEquipped[slot] = null;
             if (slot === 'backgrounds') { updatePreview(null); }
-            if (slot === 'colors') { document.getElementById('otter-preview').style.filter = 'none'; }
+            else if (slot === 'colors') { document.getElementById('otter-preview').style.filter = 'none'; }
+            else { updateOverlays(); }
             vscode.postMessage({ type: 'EQUIP_ITEM', slot: slot, itemId: null });
           } else {
             card.classList.add('equipped');
+            currentEquipped[slot] = id;
             if (slot === 'backgrounds') { updatePreview(id); }
-            if (slot === 'colors') {
+            else if (slot === 'colors') {
               document.getElementById('otter-preview').style.filter = card.dataset.cssFilter || 'none';
             }
+            else { updateOverlays(); }
             vscode.postMessage({ type: 'EQUIP_ITEM', slot: slot, itemId: id });
           }
         });

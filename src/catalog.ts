@@ -24,9 +24,17 @@ export interface CosmeticItem {
   swatchColor?: string;            // hex color shown in the wardrobe color picker swatch
   // optional overlay positioning for hats/glasses/accessories — used when the PNG is a cropped
   // standalone asset rather than a same-canvas overlay. All values are valid CSS strings.
-  overlayWidth?: string;           // e.g. '50%', '60px' — defaults to 'auto' (full otter width)
-  overlayTop?: string;             // e.g. '20%', '10px' — offset from top of otter container
-  overlayLeft?: string;            // e.g. '10%', '5px'  — offset from left of otter container
+  overlayWidth?: string;           // e.g. '50%', '60px' — defaults to 'auto'
+  overlayHeight?: string;          // e.g. '30%', '40px' — defaults to 'auto' (preserves aspect ratio)
+  overlayTop?: string;             // fallback top offset used when no emote-specific offset is defined
+  overlayLeft?: string;            // fallback left offset used when no emote-specific offset is defined
+  // per-emote offsets so the overlay tracks the face across pose changes.
+  // when defined for a mood, these take precedence over overlayTop/overlayLeft.
+  overlayEmoteOffsets?: {
+    default?:  { top: string; left: string };
+    happy?:    { top: string; left: string };
+    confused?: { top: string; left: string };
+  };
 }
 
 // all items in the game — order does not matter, GameManager sorts by threshold at runtime.
@@ -34,11 +42,20 @@ export interface CosmeticItem {
 // so milestones accumulate correctly before any artwork is finished.
 export const ITEM_CATALOG: CosmeticItem[] = [
   {
-    id: 'hat_basic',
-    label: 'Otter Hat',
+    id: 'star_hat',
+    label: 'Star Hat',
     slot: 'hats',
-    assetPath: 'assets/hats/hat_basic.png',
+    assetPath: 'assets/hats/star_hat.png',
     unlockCondition: { type: 'diagnosedCount', threshold: 1 },
+    overlayWidth: '55%',
+    overlayTop: '0%',
+    overlayLeft: '25%',
+    overlayHeight: '25%',
+    overlayEmoteOffsets: {
+      default:  { top: '20%',  left: '22%' },
+      happy:    { top: '20%',  left: '26%' }, // tune after seeing happy pose
+      confused: { top: '20%',  left: '21%' }, // tune after seeing confused pose
+    },
   },
   {
     id: 'bg_butterfly_forest',
@@ -84,34 +101,56 @@ export const ITEM_CATALOG: CosmeticItem[] = [
     overlayWidth: '55%',
     overlayTop: '30%',
     overlayLeft: '22%',
+    overlayEmoteOffsets: {
+      default:  { top: '28%', left: '21%' },
+      happy:    { top: '27%', left: '26%' }, // tune these once you can see the happy pose
+      confused: { top: '28%', left: '20%' }, // tune these once you can see the confused pose
+    },
   },
   {
     id: 'bg_ocean',
     label: 'Ocean Background',
     slot: 'backgrounds',
-    assetPath: 'assets/backgrounds/bg_ocean.png',
+    assetPath: 'assets/backgrounds/bg_ocean.jpg',
     unlockCondition: { type: 'diagnosedCount', threshold: 10 },
   },
   {
-    id: 'scarf_blue',
-    label: 'Blue Scarf',
+    id: 'bow_tie',
+    label: 'Bow Tie',
     slot: 'accessories',
-    assetPath: 'assets/accessories/scarf_blue.png',
-    unlockCondition: { type: 'diagnosedCount', threshold: 25 },
+    assetPath: 'assets/accessories/bow_tie.png',
+    unlockCondition: { type: 'diagnosedCount', threshold: 3 },
+     overlayWidth: '25%',
+     overlayHeight: '20%',
+    overlayTop: '30%',
+    overlayLeft: '22%',
+    overlayEmoteOffsets: {
+      default:  { top: '52%', left: '37%' },
+      happy:    { top: '52%', left: '40%' }, // tune these once you can see the happy pose
+      confused: { top: '56%', left: '38%' }, // tune these once you can see the confused pose
+    },
   },
   {
     id: 'bg_deep',
     label: 'Deep Dive Background',
     slot: 'backgrounds',
-    assetPath: 'assets/backgrounds/bg_deep.png',
+    assetPath: 'assets/backgrounds/bg_deep.jpg',
     unlockCondition: { type: 'diagnosedCount', threshold: 50 },
   },
   {
-    id: 'crown_gold',
+    id: 'golden_crown',
     label: 'Golden Crown',
     slot: 'hats',
-    assetPath: 'assets/hats/crown_gold.png',
+    assetPath: 'assets/hats/golden_crown.png',
     unlockCondition: { type: 'diagnosedCount', threshold: 100 },
+    overlayWidth: '55%',
+    overlayTop: '30%',
+    overlayLeft: '22%',
+    overlayEmoteOffsets: {
+      default:  { top: '6%', left: '21%' },
+      happy:    { top: '6%', left: '26%' }, // tune these once you can see the happy pose
+      confused: { top: '6%', left: '20%' },  // tune after seeing confused pose
+    },
   },
   // colors — CSS filter applied directly to the otter image, no art assets needed
   {
@@ -130,7 +169,7 @@ export const ITEM_CATALOG: CosmeticItem[] = [
     assetPath: '',
     unlockCondition: { type: 'diagnosedCount', threshold: 3 },
     cssFilter: 'hue-rotate(270deg) saturate(1.5)',
-    swatchColor: '#7a3cc8',
+    swatchColor: '#7131c1',
   },
   {
     id: 'color_pink',
@@ -139,7 +178,7 @@ export const ITEM_CATALOG: CosmeticItem[] = [
     assetPath: '',
     unlockCondition: { type: 'diagnosedCount', threshold: 5 },
     cssFilter: 'hue-rotate(320deg) saturate(2)',
-    swatchColor: '#c83a7a',
+    swatchColor: '#b93f76',
   },
   {
     id: 'color_dark_grey',
@@ -157,7 +196,7 @@ export const ITEM_CATALOG: CosmeticItem[] = [
     assetPath: '',
     unlockCondition: { type: 'diagnosedCount', threshold: 10 },
     cssFilter: 'hue-rotate(90deg) saturate(1.5)',
-    swatchColor: '#3ac87a',
+    swatchColor: '#4f8869',
   },
   {
     id: 'color_midnight',

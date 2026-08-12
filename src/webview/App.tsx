@@ -4,6 +4,21 @@
 
 import * as React from 'react';
 import './styles.css';
+import { ITEM_CATALOG } from '../catalog';
+
+// position metadata keyed by item ID — imported directly so webpack HMR picks up
+// changes to catalog.ts without needing an extension host recompile
+const catalogPositions = Object.fromEntries(
+  ITEM_CATALOG
+    .filter(item => item.overlayWidth || item.overlayTop || item.overlayEmoteOffsets)
+    .map(item => [item.id, {
+      width:        item.overlayWidth        ?? 'auto',
+      height:       item.overlayHeight       ?? 'auto',
+      top:          item.overlayTop          ?? '0',
+      left:         item.overlayLeft         ?? '0',
+      emoteOffsets: item.overlayEmoteOffsets ?? {},
+    }])
+);
 
 export interface IAppProps {}
 
@@ -93,52 +108,60 @@ export const APP: React.FunctionComponent<IAppProps> = ({}: React.PropsWithChild
   const bgSrc = equippedBgId && assets.bgUris[equippedBgId] ? assets.bgUris[equippedBgId] : '';
 
   // collect overlay data for all equipped cosmetics (hats, glasses, accessories).
-  // each entry carries a URI plus CSS size/position values so standalone cropped PNGs
-  // can be sized and placed correctly without needing to redo the art as same-canvas.
+  // URI comes from window.otterAssets (extension host generates webview-safe URLs);
+  // position values come from catalogPositions so webpack HMR picks up catalog edits live.
   const overlaySlots = ['hats', 'glasses', 'accessories'];
   const overlayItems = overlaySlots
     .map(slot => equippedItems[slot])
-    .filter((id): id is string => !!id && !!assets.overlayData[id])
-    .map(id => assets.overlayData[id]);
+    .filter((id): id is string => !!id && !!assets.overlayData[id] && !!catalogPositions[id])
+    .map(id => ({ uri: assets.overlayData[id].uri, ...catalogPositions[id] }));
 
   return (
     <div className="app">
-      {/* fixed-height container gives background, otter, and overlays a shared coordinate space */}
-      <div style={{ position: 'relative', width: '100%', height: '160px', display: 'flex', justifyContent: 'center', alignItems: 'flex-end' }}>
+      {/* vw-based height scales with the sidebar panel width so the scene
+          stays proportional when the user resizes the VS Code window */}
+      <div style={{ position: 'relative', width: '100%', height: 'clamp(100px, 42vw, 180px)', display: 'flex', justifyContent: 'center', alignItems: 'flex-end' }}>
         {/* background layer — only rendered when a background cosmetic is equipped */}
         {bgSrc && (
           <img
             src={bgSrc}
             alt=""
-            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', borderRadius: '6px' }}
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'bottom center', borderRadius: '6px' }}
           />
         )}
-        {/* inner wrapper keeps the otter and its overlay layers the same size and position */}
-        <div style={{ position: 'relative', height: '110px', zIndex: 1 }}>
-          {/* otter base image — filter applies the equipped fur color */}
+        {/* inline-block shrinks this div to exactly the otter image's rendered width,
+            so overlay top/left percentages are relative to the image, not the sidebar container */}
+        <div style={{ position: 'relative', display: 'inline-block', zIndex: 1 }}>
+          {/* otter base image — vw height scales with panel width; width:auto preserves aspect ratio */}
           <img
             id="otter"
             src={src}
-            style={{ height: '110px', width: 'auto', cursor: 'pointer', filter: colorFilter }}
+            style={{ height: 'clamp(75px, 32vw, 140px)', width: 'auto', cursor: 'pointer', filter: colorFilter }}
             onClick={handleOtterClick}
             alt="Otter"
           />
-          {/* overlay cosmetics — sized and positioned using catalog metadata */}
-          {overlayItems.map((overlay, i) => (
-            <img
-              key={i}
-              src={overlay.uri}
-              alt=""
-              style={{
-                position: 'absolute',
-                top: overlay.top,
-                left: overlay.left,
-                width: overlay.width,
-                height: 'auto',
-                pointerEvents: 'none', // clicks pass through to the otter below
-              }}
-            />
-          ))}
+          {/* overlay cosmetics — position uses per-emote offset when defined,
+              falling back to the catalog's default top/left values */}
+          {overlayItems.map((overlay, i) => {
+            const emoteOffset = overlay.emoteOffsets?.[mood];
+            const top  = emoteOffset?.top  ?? overlay.top;
+            const left = emoteOffset?.left ?? overlay.left;
+            return (
+              <img
+                key={i}
+                src={overlay.uri}
+                alt=""
+                style={{
+                  position: 'absolute',
+                  top,
+                  left,
+                  width: overlay.width,
+                  height: overlay.height,
+                  pointerEvents: 'none',
+                }}
+              />
+            );
+          })}
         </div>
       </div>
       {/* XP counter shown beneath the otter — updates on every GAME_STATE_UPDATE */}

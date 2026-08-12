@@ -115,16 +115,25 @@ export class OtterViewProvider implements vscode.WebviewViewProvider {
     // build overlay data map for cosmetics that layer on top of the otter (hats, glasses, accessories).
     // each entry includes the webview-safe URI plus optional CSS size/position values from the catalog,
     // so standalone cropped PNGs can be sized and placed without needing to redo the art as same-canvas.
-    const overlayDataMap: Record<string, { uri: string; width: string; top: string; left: string }> = {};
+    const overlayDataMap: Record<string, {
+      uri: string; width: string; height: string; top: string; left: string;
+      emoteOffsets?: {
+        default?:  { top: string; left: string };
+        happy?:    { top: string; left: string };
+        confused?: { top: string; left: string };
+      };
+    }> = {};
     for (const item of ITEM_CATALOG) {
       if (['hats', 'glasses', 'accessories'].includes(item.slot) && item.assetPath) {
         overlayDataMap[item.id] = {
           uri: webview.asWebviewUri(
             vscode.Uri.joinPath(this._extensionUri, item.assetPath),
           ).toString(),
-          width: item.overlayWidth ?? 'auto',
-          top:   item.overlayTop   ?? '0',
-          left:  item.overlayLeft  ?? '0',
+          width:        item.overlayWidth        ?? 'auto',
+          height:       item.overlayHeight       ?? 'auto',
+          top:          item.overlayTop          ?? '0',
+          left:         item.overlayLeft         ?? '0',
+          emoteOffsets: item.overlayEmoteOffsets ?? {},
         };
       }
     }

@@ -23,7 +23,18 @@ declare global {
       confusedImage: string;                    // webview-safe URL for the confused otter image
       bgUris: Record<string, string>;           // item ID → webview-safe background image URL
       colorFilters: Record<string, string>;     // item ID → CSS filter string for fur color cosmetics
-      overlayData: Record<string, { uri: string; width: string; top: string; left: string }>; // item ID → overlay positioning + URL
+      overlayData: Record<string, {
+        uri: string;
+        width: string;
+        height: string;
+        top: string;
+        left: string;
+        emoteOffsets?: {
+          default?:  { top: string; left: string };
+          happy?:    { top: string; left: string };
+          confused?: { top: string; left: string };
+        };
+      }>;
     };
   }
 
