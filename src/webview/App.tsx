@@ -99,10 +99,15 @@ export const APP: React.FunctionComponent<IAppProps> = ({}: React.PropsWithChild
 
   const assets = window.otterAssets;
 
-  // pick the correct otter image based on the current mood state
+  // pick the correct otter body based on the current mood state
   const src = mood === 'happy' ? assets.happyImage
     : mood === 'confused' ? assets.confusedImage
     : assets.defaultImage;
+
+  // pick the emote overlay — null for default mood (no emote shown)
+  const emoteSrc = mood === 'happy' ? assets.happyEmote
+    : mood === 'confused' ? assets.confusedEmote
+    : null;
 
   // resolve the background URL — empty string means no background is equipped
   const bgSrc = equippedBgId && assets.bgUris[equippedBgId] ? assets.bgUris[equippedBgId] : '';
@@ -118,28 +123,63 @@ export const APP: React.FunctionComponent<IAppProps> = ({}: React.PropsWithChild
 
   return (
     <div className="app">
-      {/* vw-based height scales with the sidebar panel width so the scene
-          stays proportional when the user resizes the VS Code window */}
-      <div style={{ position: 'relative', width: '100%', height: 'clamp(100px, 42vw, 180px)', display: 'flex', justifyContent: 'center', alignItems: 'flex-end' }}>
-        {/* background layer — only rendered when a background cosmetic is equipped */}
+      {/* scene container — vw-based height stays proportional as the panel resizes.
+          paddingBottom grounds the otter slightly above the container's bottom edge. */}
+      <div style={{
+        position: 'relative',
+        width: '100%',
+        height: 'clamp(120px, 48vw, 200px)',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'flex-end',
+        paddingBottom: '0',
+        borderRadius: '8px',
+        overflow: 'visible',
+      }}>
+        {/* background — anchored to bottom so zooming keeps the ground visible */}
         {bgSrc && (
           <img
             src={bgSrc}
             alt=""
-            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'bottom center', borderRadius: '6px' }}
+            style={{
+              position: 'absolute',
+              inset: 0,
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              objectPosition: 'bottom center',
+              borderRadius: '8px',
+            }}
           />
         )}
-        {/* inline-block shrinks this div to exactly the otter image's rendered width,
-            so overlay top/left percentages are relative to the image, not the sidebar container */}
+        {/* inline-block wrapper shrinks to the otter's rendered width so overlay
+            percentages are relative to the image, not the full sidebar container */}
         <div style={{ position: 'relative', display: 'inline-block', zIndex: 1 }}>
-          {/* otter base image — vw height scales with panel width; width:auto preserves aspect ratio */}
+          {/* otter body — clamp() keeps it proportional across all panel widths */}
           <img
             id="otter"
             src={src}
-            style={{ height: 'clamp(75px, 32vw, 140px)', width: 'auto', cursor: 'pointer', filter: colorFilter }}
+            style={{ height: 'clamp(80px, 34vw, 150px)', width: 'auto', cursor: 'pointer', filter: colorFilter }}
             onClick={handleOtterClick}
             alt="Otter"
           />
+          {/* emote overlay — floats above the otter's head, only shown for happy/confused moods */}
+          {emoteSrc && (
+            <img
+              src={emoteSrc}
+              alt=""
+              style={{
+                position: 'absolute',
+                bottom: '90%',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                width: '75%',
+                height: 'auto',
+                pointerEvents: 'none',
+                zIndex: 2,
+              }}
+            />
+          )}
           {/* overlay cosmetics — position uses per-emote offset when defined,
               falling back to the catalog's default top/left values */}
           {overlayItems.map((overlay, i) => {

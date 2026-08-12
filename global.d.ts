@@ -18,9 +18,11 @@ declare global {
     // cosmetic asset data baked into the sidebar HTML at generation time so the React app
     // can resolve image URLs and CSS filters without additional round-trips to the extension host.
     otterAssets: {
-      defaultImage: string;                     // webview-safe URL for the neutral otter image
-      happyImage: string;                       // webview-safe URL for the happy otter image
-      confusedImage: string;                    // webview-safe URL for the confused otter image
+      defaultImage: string;                     // webview-safe URL for the neutral otter body
+      happyImage: string;                       // webview-safe URL for the happy otter body
+      confusedImage: string;                    // webview-safe URL for the confused otter body
+      happyEmote: string;                       // emote overlay shown above the otter when happy
+      confusedEmote: string;                    // emote overlay shown above the otter when confused
       bgUris: Record<string, string>;           // item ID → webview-safe background image URL
       colorFilters: Record<string, string>;     // item ID → CSS filter string for fur color cosmetics
       overlayData: Record<string, {

@@ -47,12 +47,12 @@ export const ITEM_CATALOG: CosmeticItem[] = [
     slot: 'hats',
     assetPath: 'assets/hats/star_hat.png',
     unlockCondition: { type: 'diagnosedCount', threshold: 1 },
-    overlayWidth: '55%',
+    overlayWidth: '60%',
     overlayTop: '0%',
     overlayLeft: '25%',
-    overlayHeight: '25%',
+    overlayHeight: '30%',
     overlayEmoteOffsets: {
-      default:  { top: '20%',  left: '22%' },
+      default:  { top: '5%',  left: '22%' },
       happy:    { top: '20%',  left: '26%' }, // tune after seeing happy pose
       confused: { top: '20%',  left: '21%' }, // tune after seeing confused pose
     },
@@ -102,9 +102,9 @@ export const ITEM_CATALOG: CosmeticItem[] = [
     overlayTop: '30%',
     overlayLeft: '22%',
     overlayEmoteOffsets: {
-      default:  { top: '28%', left: '21%' },
-      happy:    { top: '27%', left: '26%' }, // tune these once you can see the happy pose
-      confused: { top: '28%', left: '20%' }, // tune these once you can see the confused pose
+      default:  { top: '8%', left: '21%' },
+      happy:    { top: '5%', left: '22%' }, // tune these once you can see the happy pose
+      confused: { top: '8%', left: '20%' }, // tune these once you can see the confused pose
     },
   },
   {
@@ -125,9 +125,9 @@ export const ITEM_CATALOG: CosmeticItem[] = [
     overlayTop: '30%',
     overlayLeft: '22%',
     overlayEmoteOffsets: {
-      default:  { top: '52%', left: '37%' },
-      happy:    { top: '52%', left: '40%' }, // tune these once you can see the happy pose
-      confused: { top: '56%', left: '38%' }, // tune these once you can see the confused pose
+      default:  { top: '45%', left: '37%' },
+      happy:    { top: '45%', left: '37%' }, // tune these once you can see the happy pose
+      confused: { top: '45%', left: '37%' }, // tune these once you can see the confused pose
     },
   },
   {

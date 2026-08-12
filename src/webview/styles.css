@@ -9,7 +9,7 @@ h1 {
 
 /* outer wrapper: centers the content and caps width so it stays readable at any sidebar width */
 .app {
-  margin: 15px auto;
+  margin: 8px auto 0;
   max-width: 80rem;
 }
 

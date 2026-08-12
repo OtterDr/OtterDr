@@ -76,7 +76,7 @@ export class OtterViewProvider implements vscode.WebviewViewProvider {
   private _getHtmlForWebview(webview: vscode.Webview): string {
     const nonce = getNonce();
 
-    // resolve webview-safe URIs for the three otter emote images
+    // resolve webview-safe URIs for the three otter body images
     const defaultImage = webview.asWebviewUri(
       vscode.Uri.joinPath(this._extensionUri, 'assets', 'otter', 'default_otter.png'),
     );
@@ -85,6 +85,14 @@ export class OtterViewProvider implements vscode.WebviewViewProvider {
     );
     const confusedImage = webview.asWebviewUri(
       vscode.Uri.joinPath(this._extensionUri, 'assets', 'otter', 'confused_otter.png'),
+    );
+
+    // emote overlays float above the otter's head when a non-default mood is active
+    const happyEmote = webview.asWebviewUri(
+      vscode.Uri.joinPath(this._extensionUri, 'assets', 'emotes', 'happy_emote.png'),
+    );
+    const confusedEmote = webview.asWebviewUri(
+      vscode.Uri.joinPath(this._extensionUri, 'assets', 'emotes', 'confused_emote.png'),
     );
 
     // the React bundle built from src/webview/index.tsx
@@ -159,6 +167,8 @@ export class OtterViewProvider implements vscode.WebviewViewProvider {
           defaultImage: "${defaultImage}",
           happyImage: "${happyImage}",
           confusedImage: "${confusedImage}",
+          happyEmote: "${happyEmote}",
+          confusedEmote: "${confusedEmote}",
           bgUris: ${JSON.stringify(bgUriMap)},
           colorFilters: ${JSON.stringify(colorFilterMap)},
           overlayData: ${JSON.stringify(overlayDataMap)}
