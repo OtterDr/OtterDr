@@ -6,16 +6,15 @@ import * as vscode from 'vscode';
 
 // shape of one AI-translated result; mirrors the structure rendered in the diagnosis panel
 export interface OtterResponse {
-  whatHappened: string;   // plain-English explanation of what went wrong
-  nextSteps: string[];    // 2-3 actionable steps the user can take to fix the error
-  otterThoughts: string;  // a light ocean/otter-themed encouragement or pun
+  whatHappened: string; // plain-English explanation of what went wrong
+  nextSteps: string[]; // 2-3 actionable steps the user can take to fix the error
+  otterThoughts: string; // a light ocean/otter-themed encouragement or pun
 }
 
 export async function otterTranslation(
-  errors: string,  // JSON-serialized ErrorFormat[] produced by errorListening.ts
-  model: vscode.LanguageModelChat,
+  errors: string, // JSON-serialized ErrorFormat[] produced by errorListening.ts
+  model: vscode.LanguageModelChat | undefined,
 ): Promise<OtterResponse[]> {
-
   // the system prompt defines the AI persona and the strict output contract.
   // explicit rules (no markdown, exact JSON shape, same array order as input) make the
   // response easier to parse reliably and safe to render directly into HTML.
@@ -68,7 +67,9 @@ export async function otterTranslation(
     // before seeing the actual error data in the second message.
     const messages = [
       vscode.LanguageModelChatMessage.User(systemPrompt.trim()),
-      vscode.LanguageModelChatMessage.User(`Here are the errors to translate: ${errors}`),
+      vscode.LanguageModelChatMessage.User(
+        `Here are the errors to translate: ${errors}`,
+      ),
     ];
 
     const response = await model.sendRequest(messages, {});
@@ -82,7 +83,10 @@ export async function otterTranslation(
     let parsed: any;
     try {
       // some models wrap their JSON output in ```json ... ``` fences — strip those first
-      const stripped = fullText.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+      const stripped = fullText
+        .replace(/^```(?:json)?\s*/i, '')
+        .replace(/\s*```$/, '')
+        .trim();
       // extract just the [...] array block in case the model added explanatory prose around it
       const jsonMatch = stripped.match(/\[[\s\S]*\]/);
       const jsonText = jsonMatch ? jsonMatch[0] : stripped;
@@ -93,19 +97,20 @@ export async function otterTranslation(
     }
 
     return parsed;
-
   } catch (err) {
     console.error('Error Occurred with Translation:', err);
 
     // always return a valid OtterResponse[] so the diagnosis panel renders something
     // useful even when the AI call fails, rather than crashing or showing a blank panel
-    return [{
-      whatHappened: 'OtterDr had trouble understanding these errors clearly.',
-      nextSteps: [
-        'Try selecting the errors again starting with the red squiggle lines.',
-        'Make sure your internet connection is stable.',
-      ],
-      otterThoughts: 'These errors are drifting 🌊',
-    }];
+    return [
+      {
+        whatHappened: 'OtterDr had trouble understanding these errors clearly.',
+        nextSteps: [
+          'Try selecting the errors again starting with the red squiggle lines.',
+          'Make sure your internet connection is stable.',
+        ],
+        otterThoughts: 'These errors are drifting 🌊',
+      },
+    ];
   }
 }

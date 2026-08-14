@@ -7,80 +7,13 @@ import * as vscode from 'vscode';
 import { errorListener } from './errorListening';
 import { GameManager } from './gameManager';
 import { OtterViewProvider } from './sidebarProvider';
-import { openDiagnosisPanel } from './diagnosisPanel';
+import { openDiagnosisPanel, resolveLanguageModel } from './diagnosisPanel';
 import { renderWardrobeHTML } from './wardrobe';
 
 // only one wardrobe panel can be open at a time — tracked here so the broadcast
 // callback in the GameManager closure can reach it
 let wardrobePanel: vscode.WebviewPanel | undefined;
 
-
-//Storing the default model key in this variable
-const SAVED_MODEL_KEY = 'otterDr.selectedModelId';
-
-//Helper function used to fetch, validate, and select the default language model
-
-async function resolveLanguageModel(
-  context: vscode.ExtensionContext,
-  forceSelect: boolean = false,
-): Promise<vscode.LanguageModelChat | undefined> {
-  const models = await vscode.lm.selectChatModels({});
-  console.log(
-    'Available models:',
-    models.map((m) => m.name),
-  );
-  //Handles if no models are installed
-  if (models.length === 0) {
-    const action = await vscode.window.showErrorMessage(
-      'OtterDr currently uses GitHub Copilot to work. Please install the extension to get started.',
-      'Get GitHub Copilot',
-    );
-    if (action === 'Get GitHub Copilot') {
-      vscode.env.openExternal(
-        vscode.Uri.parse('vscode:extension/GitHub.copilot-chat'),
-      );
-    }
-    return undefined;
-  }
-
-  //Check the stored preference if not forcing a new selection
-  if (!forceSelect) {
-    const savedModelId = context.globalState.get<string>(SAVED_MODEL_KEY);
-    if (savedModelId) {
-      const savedModel = models.find((m) => m.id === savedModelId);
-      if (savedModel) {
-        return savedModel;
-      }
-    }
-  }
-
-  //User selection / the default model selection if only one exists
-  if (models.length === 1) {
-    const singleModel = models[0];
-    await context.globalState.update(SAVED_MODEL_KEY, singleModel.id);
-    return singleModel;
-  }
-
-  //Dropdown of other models
-  const quickPickItems = models.map((m) => ({
-    label: m.name,
-    description: `${m.vendor} (${m.family})`,
-    model: m,
-  }));
-
-  const choice = await vscode.window.showQuickPick(quickPickItems, {
-    placeHolder: forceSelect
-      ? 'Select a new default AI model for OtterDr'
-      : 'Select the AI language model for OtterDr to use',
-  });
-
-  if (choice) {
-    await context.globalState.update(SAVED_MODEL_KEY, choice.model.id);
-    return choice.model;
-  }
-
-  return undefined;
-}
 export function activate(context: vscode.ExtensionContext) {
   console.log('🔴 OtterDr ACTIVATING!');
 
@@ -119,7 +52,10 @@ export function activate(context: vscode.ExtensionContext) {
 
   // register the sidebar WebviewView (shown in the Explorer panel)
   context.subscriptions.push(
-    vscode.window.registerWebviewViewProvider(OtterViewProvider.viewType, provider),
+    vscode.window.registerWebviewViewProvider(
+      OtterViewProvider.viewType,
+      provider,
+    ),
   );
 
   // watch for diagnostic changes in the active editor and update the otter's mood
@@ -130,12 +66,17 @@ export function activate(context: vscode.ExtensionContext) {
   // triggered by the status bar — runs the AI diagnosis flow
   context.subscriptions.push(
     vscode.commands.registerCommand('otterDr.openWebview', () =>
-      openDiagnosisPanel(context, (count) => gameManager.onErrorsDiagnosed(count)),
+      openDiagnosisPanel(context, (count) =>
+        gameManager.onErrorsDiagnosed(count),
+      ),
     ),
   );
 
   // status bar button — clicking it triggers the diagnosis command
-  const statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
+  const statusBar = vscode.window.createStatusBarItem(
+    vscode.StatusBarAlignment.Right,
+    100,
+  );
   statusBar.command = 'extension.allCommands';
   statusBar.text = '🦦 OtterDr';
   statusBar.show();
@@ -163,16 +104,29 @@ export function activate(context: vscode.ExtensionContext) {
         { enableScripts: true, localResourceRoots: [context.extensionUri] },
       );
 
-      wardrobePanel.webview.html = renderWardrobeHTML(wardrobePanel.webview, context.extensionUri);
+      wardrobePanel.webview.html = renderWardrobeHTML(
+        wardrobePanel.webview,
+        context.extensionUri,
+      );
 
       wardrobePanel.webview.onDidReceiveMessage((message) => {
         // wardrobe JS is ready — send current game state so cards render with correct lock/equip state
-        if (message.type === 'WEBVIEW_READY') { gameManager.sendInitialState(); }
+        if (message.type === 'WEBVIEW_READY') {
+          gameManager.sendInitialState();
+        }
         // user clicked a cosmetic card — persist the choice and broadcast to all panels
-        if (message.type === 'EQUIP_ITEM') { gameManager.equipItem(message.slot, message.itemId); }
+        if (message.type === 'EQUIP_ITEM') {
+          gameManager.equipItem(message.slot, message.itemId);
+        }
       });
 
-      wardrobePanel.onDidDispose(() => { wardrobePanel = undefined; }, null, context.subscriptions);
+      wardrobePanel.onDidDispose(
+        () => {
+          wardrobePanel = undefined;
+        },
+        null,
+        context.subscriptions,
+      );
     }),
   );
 }
