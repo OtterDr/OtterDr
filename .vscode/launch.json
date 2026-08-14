@@ -12,6 +12,9 @@
 			"args": [
 				"--extensionDevelopmentPath=${workspaceFolder}"
 			],
+			"env": {
+				"NODE_OPTIONS": "--no-deprecation"
+			},
 			"outFiles": [
 				"${workspaceFolder}/dist/**/*.js"
 			],

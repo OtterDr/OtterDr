@@ -1,17 +1,24 @@
+// aiTranslator.ts — sends formatted error data to a VS Code language model and parses the response.
+// Uses the VS Code Language Model API (vscode.lm), which routes requests through any installed
+// chat extension (e.g. GitHub Copilot) — no direct API key or network access needed from our code.
+
 import * as vscode from 'vscode';
 
-// one AI-translated result per error; mirrors the structure rendered in the diagnosis panel
+// shape of one AI-translated result; mirrors the structure rendered in the diagnosis panel
 export interface OtterResponse {
-  whatHappened: string;
-  nextSteps: string[];
-  otterThoughts: string;
+  whatHappened: string;   // plain-English explanation of what went wrong
+  nextSteps: string[];    // 2-3 actionable steps the user can take to fix the error
+  otterThoughts: string;  // a light ocean/otter-themed encouragement or pun
 }
 
 export async function otterTranslation(
-  errors: string,  // JSON array of ErrorFormat[]
+  errors: string,  // JSON-serialized ErrorFormat[] produced by errorListening.ts
   model: vscode.LanguageModelChat,
 ): Promise<OtterResponse[]> {
 
+  // the system prompt defines the AI persona and the strict output contract.
+  // explicit rules (no markdown, exact JSON shape, same array order as input) make the
+  // response easier to parse reliably and safe to render directly into HTML.
   const systemPrompt = `You are an Otter AI, friendly programming assistant who specializes in compiler and runtime errors.
 
   You will receive a JSON Array of error objects, each with this exact structure:
@@ -56,8 +63,9 @@ export async function otterTranslation(
 `;
 
   try {
-    // VS Code's chat API only has User/Assistant roles, so the system
-    // prompt is sent as a leading User message instead of a system role
+    // VS Code's Language Model API only supports User and Assistant roles — no system role.
+    // The system prompt is sent as the first User message so the model treats it as instructions
+    // before seeing the actual error data in the second message.
     const messages = [
       vscode.LanguageModelChatMessage.User(systemPrompt.trim()),
       vscode.LanguageModelChatMessage.User(`Here are the errors to translate: ${errors}`),
@@ -65,7 +73,7 @@ export async function otterTranslation(
 
     const response = await model.sendRequest(messages, {});
 
-    // vscode.lm streams the response in chunks; accumulate before parsing
+    // the model streams its response in chunks — accumulate the full text before parsing
     let fullText = '';
     for await (const chunk of response.text) {
       fullText += chunk;
@@ -73,9 +81,9 @@ export async function otterTranslation(
 
     let parsed: any;
     try {
-      // Strip markdown code fences if the model wrapped the response
+      // some models wrap their JSON output in ```json ... ``` fences — strip those first
       const stripped = fullText.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
-      // Extract the first [...] array block in case there's leading/trailing prose
+      // extract just the [...] array block in case the model added explanatory prose around it
       const jsonMatch = stripped.match(/\[[\s\S]*\]/);
       const jsonText = jsonMatch ? jsonMatch[0] : stripped;
       parsed = JSON.parse(jsonText);
@@ -89,7 +97,8 @@ export async function otterTranslation(
   } catch (err) {
     console.error('Error Occurred with Translation:', err);
 
-    // return a valid OtterResponse[] so the panel always renders something even on failure
+    // always return a valid OtterResponse[] so the diagnosis panel renders something
+    // useful even when the AI call fails, rather than crashing or showing a blank panel
     return [{
       whatHappened: 'OtterDr had trouble understanding these errors clearly.',
       nextSteps: [
