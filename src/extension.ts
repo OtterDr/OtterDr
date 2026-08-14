@@ -36,18 +36,13 @@ async function resolveLanguageModel(
   //Handles if no models are installed
   if (models.length === 0) {
     const action = await vscode.window.showErrorMessage(
-      'OtterDr needs a language model to work. Install one to get started.',
-      'Get GitHub Copilot (No API key required)',
-      'Input API Key',
+      'OtterDr currently uses GitHub Copilot to work. Please install the extension to get started.',
+      'Get GitHub Copilot',
     );
-    if (action === 'Get GitHub Copilot (No API key required)') {
+    if (action === 'Get GitHub Copilot') {
       vscode.env.openExternal(
         vscode.Uri.parse('vscode:extension/GitHub.copilot-chat'),
       );
-    } else if (action === 'Input API Key') {
-      //vscode.commands.executeCommand('workbench.extensions.search', 'AI');
-      //How to accept an input in text?
-
     }
     return undefined;
   }
@@ -90,8 +85,6 @@ async function resolveLanguageModel(
 
   return undefined;
 }
-
-
 export function activate(context: vscode.ExtensionContext) {
   console.log('🔴 OtterDr ACTIVATING!');
 
@@ -216,10 +209,23 @@ export function activate(context: vscode.ExtensionContext) {
         }
 
         // request any available VS Code chat model (e.g. GitHub Copilot) — no API key needed
-        //Model selection call
-        const model = await resolveLanguageModel(context);
-        if (!model) {
-          return;
+        const models = await vscode.lm.selectChatModels({});
+        console.log(
+          'Available models:',
+          models.map((m) => m.name),
+        );
+        //Handles if no models are installed
+        if (models.length === 0) {
+          const action = await vscode.window.showErrorMessage(
+            'OtterDr currently uses GitHub Copilot to work. Please install the extension to get started.',
+            'Get GitHub Copilot',
+          );
+          if (action === 'Get GitHub Copilot') {
+            vscode.env.openExternal(
+              vscode.Uri.parse('vscode:extension/GitHub.copilot-chat'),
+            );
+          }
+          return undefined;
         }
 
         console.log('Using model: ', model.name);

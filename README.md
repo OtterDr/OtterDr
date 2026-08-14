@@ -7,15 +7,9 @@
     </p>
 </div>
 
-
 ![GitHub License](https://img.shields.io/github/license/OtterDr/OtterDr)
 ![GitHub Issues or Pull Requests](https://img.shields.io/github/issues/OtterDr/OtterDr)
 ![Static Badge](https://img.shields.io/badge/TypeScript-blue?style=flat&logo=typescript&label=Made%20with&labelColor=gray)
-
-
-
-
-
 
 ## 📌 Introduction
 
@@ -23,11 +17,11 @@
 
 OtterDr is designed to make debugging:
 
-* **Less intimidating**, by simplifying complex error messages
+- **Less intimidating**, by simplifying complex error messages
 
-* **More educational**, by explaining the “why” behind the fix
+- **More educational**, by explaining the “why” behind the fix
 
-* And a little more **fun** 🦦
+- And a little more **fun** 🦦
 
 ## **🧠 About the OtterDr extension**
 
@@ -37,28 +31,27 @@ OtterDr helps you understand and fix workspace coding errors. You select the cod
 
 Error messages and stack traces are often cryptic or poorly documented, leading to wasted time. OtterDr streamlines the debugging process by providing immediate clarity when:
 
-* **Learning new stacks:** Quickly deciphers unfamiliar errors when working with a new language, framework, or library  
-* **Context switching:** Saves mental energy by translating technical jargon into actionable insights without leaving your editor  
-* **Beyond a “quick fix”:** Encourages a deeper understanding of *why* an error occurred, helping you write more resilient code
+- **Learning new stacks:** Quickly deciphers unfamiliar errors when working with a new language, framework, or library
+- **Context switching:** Saves mental energy by translating technical jargon into actionable insights without leaving your editor
+- **Beyond a “quick fix”:** Encourages a deeper understanding of _why_ an error occurred, helping you write more resilient code
 
 ## **Features**
 
 ### **Otter Mascot**
 
-* 🦦 **Real-time interaction:** OtterDr reacts to your coding environment as you work
+- 🦦 **Real-time interaction:** OtterDr reacts to your coding environment as you work
 
-* 😕 **Visual Diagnostics:** OtterDr shows confusion when VS Code detects compiler errors or issues
+- 😕 **Visual Diagnostics:** OtterDr shows confusion when VS Code detects compiler errors or issues
 
-* 😊 **Interactivity:** Scratch OtterDr's belly to brighten your dev session\! 
+- 😊 **Interactivity:** Scratch OtterDr's belly to brighten your dev session\!
 
 ### **AI-Powered Assistance**
 
-* 🎯 **Targeted Analysis:** Select specific code snippets to receive focused, context-aware explanations 
+- 🎯 **Targeted Analysis:** Select specific code snippets to receive focused, context-aware explanations
 
-* 📊 **One-Click Insights:** Use the OtterDr Status Bar button to instantly trigger the AI response panel with insight into your highlighted code 
+- 📊 **One-Click Insights:** Use the OtterDr Status Bar button to instantly trigger the AI response panel with insight into your highlighted code
 
-* 🤖 **Integrated UI:** Access clear, AI-generated explanations and solutions directly within a dedicated VS Code panel 
-
+- 🤖 **Integrated UI:** Access clear, AI-generated explanations and solutions directly within a dedicated VS Code panel
 
 ## **📥 Installation**
 
@@ -72,7 +65,6 @@ Error messages and stack traces are often cryptic or poorly documented, leading 
 
 4. Click **Install**
 
-
 ### **From Source (for contributors)**
 
 1. Open your terminal and clone the repo:  
@@ -80,51 +72,40 @@ Error messages and stack traces are often cryptic or poorly documented, leading 
    `cd OtterDr`
 
 2. Install dependencies:  
-    `npm install`
+   `npm install`
 
 3. Build the extension:  
-    `npm run compile` 
+   `npm run compile`
 
 4. Open VS Code and run the extension in **Development Mode** (press `F5`)
 
+###  **🔑 Initial Setup**
 
-### **🔑 Initial Setup – OpenAI API Key**
+**V0.1.0 \- July 29, 2026** : OtterDr no longer requires an API Key, and instead now bases its explanations on VS Code's Copilot extension
 
-OtterDr requires an OpenAI API Key to generate explanations and suggestions
+- **First Use**: The first time you click the **🦦 OtterDr button** in the Status Bar on the lower righthand side of your VS Code window, you will be taken to the VS Code Copilot extension page
 
-* **First Use**: The first time you click the *OtterDr button* in the Status Bar, you will be prompted to enter your key  
-
-* **Secure Storage:** Once entered, your key is stored securely in VS Code's **SecretStorage**
-
-
-### **Manage Your API Key**
-
-If you need to change or remove your key later, use the Command Palette (Cmd/Ctrl \+ Shift \+ P): 
-
-*  **✏️ Update Key:** Search for `OtterDr: Update API Key`
-
-*  **🗑️ Delete Key:** Search for `OtterDr: Delete API Key`
-
+- **Setup:** Once you download and enable Copilot, OtterDr is ready to go!
 
 ## **🧪 Usage Guide**
 
 **1️⃣ Detect Errors**
 
-* When VS Code detects errors in the current file, 🦦 your OtterDr displays *confusion*
+- When VS Code detects errors in the current file, 🦦 your OtterDr displays _confusion_
 
 **2️⃣ Select the Error Code**
 
-* Highlight **only the relevant code snippet** (you can include surrounding lines for context)
+- Highlight **only the relevant code snippet** (you can include surrounding lines for context)
 
-⚠️ *Tip: Avoid selecting the entire file — keep it focused on the specific error for the most accurate AI response*
+⚠️ _Tip: Avoid selecting the entire file — keep it focused on the specific error for the most accurate AI response_
 
 **3️⃣ Trigger OtterDr AI**
 
-* Click the **OtterDr button in the Status Bar.** The panel will open and send your code for analysis
+- Click the **OtterDr button in the Status Bar.** The Status Bar can be found on the bottom of your VS Code window. The panel will open and send your code for analysis
 
 **4️⃣ View AI Explanation**
 
-* Read the explanation and fix suggestions. Once the error is resolved, 🦦 **your OtterDr becomes happy again** 🎉
+- Read the explanation and fix suggestions. Once the error is resolved, 🦦 **your OtterDr becomes happy again** 🎉
 
 ---
 
@@ -135,7 +116,6 @@ If you need to change or remove your key later, use the Command Palette (Cmd/Ctr
 <img src="https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExbTMzdWJ3cG11ZmRsejFheHlwaGtzNXB4eHUzb3J5c2RmMGFkZTZlZiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/7xKv1mdOkeC1AeCDcL/giphy.gif" alt="OtterDr expression variations" width="200"/>
 
 OtterDr is very expressive, and will be happy at belly scratches and confused at errors.
-
 
 <img src="https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExYmh3ZzU3b3U2bTFlNG1qM2k3czIzZjVua2VoZW1uaHJ2OTFpbDlueiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/ucfq7tCaeN6qOLuurj/giphy.gif" alt="OtterDr mood changes in action" width="500"/>
 
@@ -154,7 +134,7 @@ We ❤️ contributions\!
 ### **Contribution Guidelines**
 
 1. **Fork** the repository and create a feature branch:  
-    `git checkout -b feature/your-feature`
+   `git checkout -b feature/your-feature`
 
 2. **Commit** your changes with clear, descriptive messages
 
@@ -172,33 +152,49 @@ We ❤️ contributions\!
 
 ### **🗺️ Contributions Roadmap**
 
-| Feature | Status |
-| :---- | :---- |
-| Otter mood reactions | ✅ |
-| Inline error selection | ✅ |
-| AI explanation panel | ✅ |
-| Multiple error selection | ⏳ |
-| Additional interaction choices with otter (Play, Feed etc) | 🙏🏻 |
-| Gamification features (Level up) | 🙏🏻 |
-| Unlocking skins or designs for otter based on level | 🙏🏻 |
-| Comprehensive Test Suite | 🙏🏻 |
-| Support for additional LLMs | 🙏🏻 |
-| Create user settings | 🙏🏻 |
+| Feature                                                    | Status |
+| :--------------------------------------------------------- | :----- |
+| Otter mood reactions                                       | ✅     |
+| Inline error selection                                     | ✅     |
+| AI explanation panel                                       | ✅     |
+| Multiple error selection                                   | ✅     |
+| Streamlined Copilot support                                | ✅     |
+| Support for additional LLMs                                | ⏳     |
+| Gamification features (Level up)                           | ⏳     |
+| Unlocking skins or designs for otter based on level        | ⏳     |
+| Additional interaction choices with otter (Play, Feed etc) | 🙏🏻     |
+| Comprehensive Test Suite                                   | 🙏🏻     |
+| Create user settings                                       | 🙏🏻     |
 
-✅ Ready  |  ⏳ In Progress  |  🙏🏻 Looking for Contributors
+✅ Ready | ⏳ In Progress | 🙏🏻 Looking for Contributors
 
 ---
 
-## **📝 Changelog**
+## **📝 Patch Notes**
 
-#### **V1.0.0 \- February 24, 2026**
+#### **V0.1.0 \- July 29, 2026**
 
-* Initial release
+- Supports Copilot
 
-* Otter mascot with mood states
+   Instead of being required to input an OpenAI API key, users can now simply launch OtterDr by enabling Copilot on VS Code
 
-* Inline code selection  
-  AI-powered error explanations
+- Multiple error selection
+
+  Users can now ask OtterDr up to 5 errors at a time
+
+- Tracking number of errors diagnosed so far
+
+  Be on the lookout for new features coming from us! Some of our future updates may involve how many times you've utilized OtterDr... 🌊🤓
+
+#### **V0.0.1 \- February 24, 2026**
+
+- Initial release
+
+- Otter mascot with mood states
+
+- Inline code selection
+
+- AI-powered error explanations
 
 ---
 
@@ -208,23 +204,39 @@ This project is licensed under the **MIT License**. See `LICENSE.md` for details
 
 ---
 
-## **👩‍💻 Contributors**
+## **👩‍💻 Project Team**
 
-* **Sofia Rodas**  [🐙  GitHub](https://github.com/sofiso99) [🖇️  LinkedIn](https://www.linkedin.com/in/sofiarodas/) Creator & Maintainer  
-* **Hyeyoon (Elaine) Sung**  [🐙  GitHub](https://github.com/shy-blue-sky)  [🖇️  LinkedIn](https://www.linkedin.com/in/hyeyoon-sung-a74378228/)  Creator & Maintainer  
-* **Stormi Stearns**  [🐙  GitHub](https://github.com/stormi25-cell)   [🖇️  LinkedIn](https://www.linkedin.com/in/essie-stearns-099912169/)  Creator & Maintainer 
-* **Katy Wells**  [🐙  GitHub](https://github.com/katygus)  [🖇️  LinkedIn](http://www.linkedin.com/in/katy-wells)  Creator & Maintainer 
-* **Delilah Lopez**  [🐙  GitHub](https://github.com/DLopez43)   [🖇️  LinkedIn](https://www.linkedin.com/in/delilah-lopez/)  Creator & Maintainer 
+### Founding Team
+
+- **Sofia Rodas** [🐙 GitHub](https://github.com/sofiso99) [🖇️ LinkedIn](https://www.linkedin.com/in/sofiarodas/) Creator
+- **Hyeyoon (Elaine) Sung** [🐙 GitHub](https://github.com/shy-blue-sky) [🖇️ LinkedIn](https://www.linkedin.com/in/hyeyoon-sung-a74378228/) Creator & Maintainer
+- **Stormi Stearns** [🐙 GitHub](https://github.com/stormi25-cell) [🖇️ LinkedIn](https://www.linkedin.com/in/essie-stearns-099912169/) Creator
+- **Katy Wells** [🐙 GitHub](https://github.com/katygus) [🖇️ LinkedIn](http://www.linkedin.com/in/katy-wells) Creator & Maintainer
+- **Delilah Lopez** [🐙 GitHub](https://github.com/DLopez43) [🖇️ LinkedIn](https://www.linkedin.com/in/delilah-lopez/) Creator & Maintainer
+
+### Current Maintainers
+
+- **Katy Wells**
+- **Delilah Lopez**
+- **Hyeyoon (Elaine) Sung**
+- **Lawrenzo Lue** [🐙 GitHub](http://github.com/lawrenzo456/) [🖇️ LinkedIn](https://www.linkedin.com/in/lawrenzo-lue/) Maintainer
+- **Rose Raposo** [🐙 GitHub](https://github.com/rrap1) [🖇️ LinkedIn](https://www.linkedin.com/in/roseraposo/) Maintainer
+
+### Contributors
+
+![We want you!](https://i.makeagif.com/media/11-06-2016/VgMuJi.gif)
+
+[Now Loading... (We want YOU!)]
 
 ---
 
 ## **❓ FAQ**
 
 **Does OtterDr AI fix my code automatically?**  
- No — it explains errors so *you* learn how to fix them.
+ No — it explains errors so _you_ learn how to fix them.
 
 **Is my code stored anywhere?**  
- No. Code snippets are only sent to OpenAI for analysis and are not saved by the extension.
+ No. Code snippets are only sent to AI for analysis and are not saved by the extension.
 
 ---
 
@@ -232,11 +244,10 @@ This project is licensed under the **MIT License**. See `LICENSE.md` for details
 
 If you enjoy OtterDr AI:
 
-* ⭐ Star the repo
+- ⭐ Star the repo
 
-* 🦦 Share it with friends
+- 🦦 Share it with friends
 
-* 🛠️ Contribute a feature
+- 🛠️ Contribute a feature
 
 Happy debugging\! 🦦✨
-
