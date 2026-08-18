@@ -7,8 +7,9 @@ import * as vscode from 'vscode';
 import { errorListener } from './errorListening';
 import { GameManager } from './gameManager';
 import { OtterViewProvider } from './sidebarProvider';
-import { openDiagnosisPanel, resolveLanguageModel } from './diagnosisPanel';
+import { openDiagnosisPanel } from './diagnosisPanel';
 import { renderWardrobeHTML } from './wardrobe';
+import { resolveLanguageModel } from './aiModelSelector';
 
 // only one wardrobe panel can be open at a time — tracked here so the broadcast
 // callback in the GameManager closure can reach it

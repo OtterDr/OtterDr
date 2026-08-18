@@ -1,13 +1,12 @@
 import * as vscode from 'vscode';
 
-//Attempting to modularize extension ts into diagnosis panel...
 
 //Storing the default model key in this variable
 const SAVED_MODEL_KEY = 'otterDr.selectedModelId';
 
-//Helper function used to fetch, validate, and select the default language model
 
-async function resolveLanguageModel(
+//Helper function used to fetch, validate, and select the default language model, returns the selected model or undefined if no model is available or selected
+export async function resolveLanguageModel(
   context: vscode.ExtensionContext,
   forceSelect: boolean = false,
 ): Promise<vscode.LanguageModelChat | undefined> {
@@ -66,5 +65,5 @@ async function resolveLanguageModel(
     return choice.model;
   }
 
-  return models[0];
+  return undefined;
 }
