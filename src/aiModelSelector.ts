@@ -1,9 +1,7 @@
 import * as vscode from 'vscode';
 
-
 //Storing the default model key in this variable
 const SAVED_MODEL_KEY = 'otterDr.selectedModelId';
-
 
 //Helper function used to fetch, validate, and select the default language model, returns the selected model or undefined if no model is available or selected
 export async function resolveLanguageModel(
@@ -20,11 +18,22 @@ export async function resolveLanguageModel(
     const action = await vscode.window.showErrorMessage(
       'OtterDr currently uses GitHub Copilot to work. Please install the extension to get started.',
       'Get GitHub Copilot',
+      'Enter API Key',
     );
     if (action === 'Get GitHub Copilot') {
       vscode.env.openExternal(
         vscode.Uri.parse('vscode:extension/GitHub.copilot-chat'),
       );
+    } else if (action === 'Enter API Key') {
+      //a dropdown to select the provider (openai, anthropic, etc)
+      //then an input box for the API key
+      //stores API in the secrets storage first?
+      //user has to press "get available models"
+      //then there is a pause, maybe a loading spinner or on the status bar to show that it's getting models
+      //on load, another dropdown appears with the available models from that provider based on the API key provided
+      //then the user can select a model and it will be stored in the global state as the default model
+      //after that model is chosen, then otterdr saves that model as the new default model;
+      //
     }
     return undefined;
   }
