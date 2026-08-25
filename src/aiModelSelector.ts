@@ -32,7 +32,6 @@ export async function resolveLanguageModel(
       //then there is a pause, maybe a loading spinner or on the status bar to show that it's getting models
       //on load, another dropdown appears with the available models from that provider based on the API key provided
       //then the user can select a model and it will be stored in the global state as the default model
-      //after that model is chosen, then otterdr saves that model as the new default model;
       //
     }
     return undefined;
