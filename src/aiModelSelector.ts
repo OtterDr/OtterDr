@@ -26,6 +26,7 @@ export async function resolveLanguageModel(
       );
     } else if (action === 'Enter API Key') {
       //a dropdown to select the provider (openai, anthropic, etc)
+      const quickPickModels: String[] = ['OpenAI', 'Anthropic', 'Other (Not Working Yet)'];
       //then an input box for the API key
       //stores API in the secrets storage first?
       //user has to press "get available models"
@@ -61,7 +62,6 @@ export async function resolveLanguageModel(
     description: `${m.vendor} (${m.family})`,
     model: m,
   }));
-
   const choice = await vscode.window.showQuickPick(quickPickItems, {
     placeHolder: forceSelect
       ? 'Select a new default AI model for OtterDr'
