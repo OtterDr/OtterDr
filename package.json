@@ -43,6 +43,10 @@
       {
         "command": "otterDr.changeModel",
         "title": "OtterDr: Change Default AI Model"
+      },
+      {
+        "command": "otterDr.clearApiKeys",
+        "title": "OtterDr: Clear Stored API Keys"
       }
     ]
   },

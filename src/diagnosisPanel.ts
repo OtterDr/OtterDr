@@ -164,6 +164,7 @@ export async function openDiagnosisPanel(
         const panel = getOrCreatePanel(context);
         panel.webview.postMessage({ type: 'LOADING_CONTENT' });
 
+        //CHANGING MODEL 2
         const model: vscode.LanguageModelChat | undefined =
           await resolveLanguageModel(context);
         // only send the uncached errors to the AI

@@ -10,6 +10,7 @@ import { OtterViewProvider } from './sidebarProvider';
 import { openDiagnosisPanel } from './diagnosisPanel';
 import { renderWardrobeHTML } from './wardrobe';
 import { resolveLanguageModel } from './aiModelSelector';
+import { deleteApiKey, SAVED_CONFIG_KEY } from './aiModelSelector2';
 
 // only one wardrobe panel can be open at a time — tracked here so the broadcast
 // callback in the GameManager closure can reach it
@@ -23,6 +24,7 @@ export function activate(context: vscode.ExtensionContext) {
   //Providing users with the option to change the default model
   // Register a command so users can change model from the Command Palette (Ctrl+Shift+P / Cmd+Shift+P)
 
+  //CHANGING RESOLVELANGUAGE
   context.subscriptions.push(
     vscode.commands.registerCommand('otterDr.changeModel', async () => {
       const selectedModel = await resolveLanguageModel(context, true);
@@ -32,6 +34,32 @@ export function activate(context: vscode.ExtensionContext) {
           `OtterDr active model changed to ${selectedModel.name}! 🦦`,
         );
       }
+    }),
+  );
+
+  //Command to clear API keys
+  context.subscriptions.push(
+    vscode.commands.registerCommand('otterDr.clearApiKeys', async () => {
+      const choice = await vscode.window.showQuickPick(
+        ['OpenAI', 'Anthropic', 'All Providers'],
+        { placeHolder: 'Select provider API key to remove from OtterDr' },
+      );
+
+      if (choice === 'OpenAI') {
+        await deleteApiKey(context, 'openai');
+      } else if (choice === 'Anthropic') {
+        await deleteApiKey(context, 'anthropic');
+      } else if (choice === 'All Providers') {
+        await deleteApiKey(context, 'openai');
+        await deleteApiKey(context, 'anthropic');
+      }
+
+      // Clear saved model config from globalState as well
+      await context.globalState.update(SAVED_CONFIG_KEY, undefined);
+
+      vscode.window.showInformationMessage(
+        'Stored API keys removed from OtterDr. 🦦',
+      );
     }),
   );
 
