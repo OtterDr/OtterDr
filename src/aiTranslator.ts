@@ -3,7 +3,7 @@
 // chat extension (e.g. GitHub Copilot) — no direct API key or network access needed from our code.
 
 import * as vscode from 'vscode';
-import { ModelConfig, getStoredApiKey } from './aiModelSelector2';
+import { ModelConfig, getStoredApiKey } from './aiModelSelector';
 
 // shape of one AI-translated result; mirrors the structure rendered in the diagnosis panel
 export interface OtterResponse {

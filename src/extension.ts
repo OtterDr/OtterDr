@@ -9,8 +9,11 @@ import { GameManager } from './gameManager';
 import { OtterViewProvider } from './sidebarProvider';
 import { openDiagnosisPanel } from './diagnosisPanel';
 import { renderWardrobeHTML } from './wardrobe';
-import { resolveLanguageModel } from './aiModelSelector';
-import { deleteApiKey, SAVED_CONFIG_KEY } from './aiModelSelector2';
+import {
+  resolveLanguageModel,
+  deleteApiKey,
+  SAVED_CONFIG_KEY,
+} from './aiModelSelector';
 
 // only one wardrobe panel can be open at a time — tracked here so the broadcast
 // callback in the GameManager closure can reach it
@@ -31,7 +34,7 @@ export function activate(context: vscode.ExtensionContext) {
 
       if (selectedModel) {
         vscode.window.showInformationMessage(
-          `OtterDr active model changed to ${selectedModel.name}! 🦦`,
+          `OtterDr active model changed to ${selectedModel.displayName}! 🦦`,
         );
       }
     }),

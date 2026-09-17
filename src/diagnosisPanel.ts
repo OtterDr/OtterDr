@@ -8,7 +8,7 @@ import { encode } from 'html-entities';
 import { errorSelection, ErrorFormat } from './errorListening';
 import { otterTranslation, OtterResponse } from './aiTranslator';
 import { getNonce } from './utils';
-import { resolveLanguageModel } from './aiModelSelector';
+import { resolveLanguageModel } from './aiModelSelectorOLD';
 
 // module-level state — one diagnosis panel at a time, with its own cache and in-flight guard
 let currentPanel: vscode.WebviewPanel | undefined;
